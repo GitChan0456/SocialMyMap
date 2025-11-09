@@ -154,6 +154,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (longClickMarker != null) {
                 longClickMarker.setMap(null);
             }
+            if (geocodedMarker != null) {
+                geocodedMarker.setMap(null);
+            }
         });
 
         this.naverMap.setOnMapLongClickListener((point, coord) -> {
@@ -162,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             longClickMarker = new Marker();
             longClickMarker.setPosition(coord);
+            longClickMarker.setIcon(OverlayImage.fromResource(com.naver.maps.map.R.drawable.navermap_default_marker_icon_blue));
             longClickMarker.setMap(naverMap);
         });
 
