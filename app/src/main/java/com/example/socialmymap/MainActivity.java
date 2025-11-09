@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,14 +18,20 @@ import android.widget.Toast;
 
 import com.example.socialmymap.databinding.ActivityMainBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.CameraPosition;
 import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.MapView;
 import com.naver.maps.map.NaverMap;
 import com.naver.maps.map.OnMapReadyCallback;
+import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
 
@@ -49,15 +56,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private NaverMap naverMap;
 
     private FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback locationCallback;
+    private LocationOverlay locationOverlay;
+    private boolean isFirstLocationUpdate = true; // 첫 위치 업데이트인지 확인하는 플래그
+
     private String serviceKey = "ffM27vy9DGkDka9x8liDumAwewOhqFwXxQTsywa37yJnj5sC1gba%2FgxZhCjct2Ht27OR3uN6WO2To439x55fIA%3D%3D";
 
     private List<Marker> busStopMarkers = new ArrayList<>();
     private OverlayImage busStopIcon;
-    private Marker longClickMarker; // 롱 클릭으로 생성된 마커를 저장할 변수
+    private Marker longClickMarker;
 
     private BottomSheetBehavior<View> busArrivalSheetBehavior;
     private TextView tvBusStopName, tvBusStopInfo, tvSoonArrival;
     private LinearLayout llBusArrivalList;
+    private FloatingActionButton fabCurrentLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,10 +83,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+        fabCurrentLocation = findViewById(R.id.fab_current_location);
+        fabCurrentLocation.setOnClickListener(v -> moveToCurrentLocation());
+
         View bottomSheet = findViewById(R.id.bottom_sheet_bus_arrival);
         busArrivalSheetBehavior = BottomSheetBehavior.from(bottomSheet);
 
-        // 화면 높이의 50%를 계산하여 peekHeight로 설정
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int halfScreenHeight = displayMetrics.heightPixels / 2;
@@ -92,6 +106,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.naverMap = naverMap;
         Log.d(TAG, "Naver Map is ready!");
 
+        // 초기 카메라 위치 서울 시청으로 설정
+        naverMap.moveCamera(CameraUpdate.scrollAndZoomTo(new LatLng(37.5665, 126.9780), 15.0));
+
+        locationOverlay = naverMap.getLocationOverlay();
+        locationOverlay.setVisible(true);
+
         busStopIcon = OverlayImage.fromResource(R.drawable.ic_bus_with_border);
 
         naverMap.addOnCameraIdleListener(() -> {
@@ -104,41 +124,69 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapClickListener((point, coord) -> {
-            // 바텀시트 숨기기
             if (busArrivalSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
                 busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
-            // 롱클릭 마커 숨기기
             if (longClickMarker != null) {
                 longClickMarker.setMap(null);
             }
         });
 
-        // 지도 롱 클릭 리스너
         this.naverMap.setOnMapLongClickListener((point, coord) -> {
             if (longClickMarker != null) {
-                longClickMarker.setMap(null); // 기존 마커 제거
+                longClickMarker.setMap(null);
             }
             longClickMarker = new Marker();
             longClickMarker.setPosition(coord);
-            longClickMarker.setMap(naverMap); // 새 마커 추가
+            longClickMarker.setMap(naverMap);
         });
 
+        checkLocationPermission();
+    }
+
+    private void checkLocationPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            startLocationUpdates();
+        }
+    }
+
+    private void startLocationUpdates() {
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+                .setMinUpdateIntervalMillis(5000)
+                .build();
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                if (locationResult.getLastLocation() != null && naverMap != null) {
+                    LatLng latLng = new LatLng(locationResult.getLastLocation());
+                    locationOverlay.setPosition(latLng);
+
+                    // 첫 위치 업데이트일 때만 카메라 이동
+                    if (isFirstLocationUpdate) {
+                        isFirstLocationUpdate = false;
+                        naverMap.moveCamera(CameraUpdate.scrollAndZoomTo(latLng, 15.0));
+                    }
+                }
+            }
+        };
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+    }
 
-        fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
-                .addOnSuccessListener(this, location -> {
-                    if (location != null) {
-                        LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                        naverMap.moveCamera(CameraUpdate.scrollAndZoomTo(currentLocation, 15.0));
-                    } else {
-                        Toast.makeText(this, "Failed to get current location.", Toast.LENGTH_SHORT).show();
-                    }
-                });
+
+    private void moveToCurrentLocation() {
+        if (locationOverlay.getPosition() != null) {
+            naverMap.moveCamera(CameraUpdate.scrollAndZoomTo(locationOverlay.getPosition(), 15.0));
+        } else {
+            Toast.makeText(this, "Current location is not available yet.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void fetchNearbyBusStops(double lat, double lon) {
@@ -235,7 +283,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         llBusArrivalList.removeAllViews();
         tvSoonArrival.setVisibility(View.GONE);
 
-        // 바텀시트 상태를 COLLAPSED로 변경하여 peekHeight만큼 보이게 함
         busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
         new Thread(() -> {
@@ -382,7 +429,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                onMapReady(this.naverMap);
+                startLocationUpdates();
             } else {
                 Toast.makeText(this, "Location permission denied.", Toast.LENGTH_SHORT).show();
             }
@@ -392,9 +439,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onStart() { super.onStart(); mapView.onStart(); }
     @Override
-    protected void onResume() { super.onResume(); mapView.onResume(); }
+    protected void onResume() { super.onResume(); if (locationCallback != null) startLocationUpdates(); }
     @Override
-    protected void onPause() { super.onPause(); mapView.onPause(); }
+    protected void onPause() { super.onPause(); if (fusedLocationClient != null && locationCallback != null) fusedLocationClient.removeLocationUpdates(locationCallback); }
     @Override
     protected void onStop() { super.onStop(); mapView.onStop(); }
     @Override
