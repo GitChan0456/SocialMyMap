@@ -6,12 +6,16 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,11 +42,13 @@ import com.naver.maps.map.overlay.OverlayImage;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -58,18 +64,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
     private LocationOverlay locationOverlay;
-    private boolean isFirstLocationUpdate = true; // 첫 위치 업데이트인지 확인하는 플래그
+    private boolean isFirstLocationUpdate = true;
 
     private String serviceKey = "ffM27vy9DGkDka9x8liDumAwewOhqFwXxQTsywa37yJnj5sC1gba%2FgxZhCjct2Ht27OR3uN6WO2To439x55fIA%3D%3D";
 
     private List<Marker> busStopMarkers = new ArrayList<>();
     private OverlayImage busStopIcon;
     private Marker longClickMarker;
+    private Marker geocodedMarker; // 검색 결과 마커
 
     private BottomSheetBehavior<View> busArrivalSheetBehavior;
     private TextView tvBusStopName, tvBusStopInfo, tvSoonArrival;
     private LinearLayout llBusArrivalList;
     private FloatingActionButton fabCurrentLocation;
+
+    private EditText etAddress;
+    private Button btnGeocode;
+    private Geocoder geocoder;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +94,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView.getMapAsync(this);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        geocoder = new Geocoder(this, Locale.KOREA);
+
+        etAddress = findViewById(R.id.et_address);
+        btnGeocode = findViewById(R.id.btn_geocode);
+        btnGeocode.setOnClickListener(v -> {
+            String address = etAddress.getText().toString();
+            if (!address.isEmpty()) {
+                performGeocoding(address);
+            } else {
+                Toast.makeText(this, "주소를 입력해주세요.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
 
         fabCurrentLocation = findViewById(R.id.fab_current_location);
         fabCurrentLocation.setOnClickListener(v -> moveToCurrentLocation());
@@ -106,7 +131,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.naverMap = naverMap;
         Log.d(TAG, "Naver Map is ready!");
 
-        // 초기 카메라 위치 서울 시청으로 설정
         naverMap.moveCamera(CameraUpdate.scrollAndZoomTo(new LatLng(37.5665, 126.9780), 15.0));
 
         locationOverlay = naverMap.getLocationOverlay();
@@ -144,6 +168,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         checkLocationPermission();
     }
 
+    private void performGeocoding(String addressString) {
+        new Thread(() -> {
+            try {
+                List<Address> addresses = geocoder.getFromLocationName(addressString, 1);
+                if (addresses != null && !addresses.isEmpty()) {
+                    Address address = addresses.get(0);
+                    LatLng point = new LatLng(address.getLatitude(), address.getLongitude());
+
+                    runOnUiThread(() -> {
+                        if (geocodedMarker != null) {
+                            geocodedMarker.setMap(null);
+                        }
+                        geocodedMarker = new Marker();
+                        geocodedMarker.setPosition(point);
+                        geocodedMarker.setCaptionText(addressString);
+                        geocodedMarker.setMap(naverMap);
+
+                        naverMap.moveCamera(CameraUpdate.scrollTo(point));
+                    });
+                } else {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show());
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Geocoding failed", e);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "지오코딩 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+
     private void checkLocationPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -165,7 +219,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     LatLng latLng = new LatLng(locationResult.getLastLocation());
                     locationOverlay.setPosition(latLng);
 
-                    // 첫 위치 업데이트일 때만 카메라 이동
                     if (isFirstLocationUpdate) {
                         isFirstLocationUpdate = false;
                         naverMap.moveCamera(CameraUpdate.scrollAndZoomTo(latLng, 15.0));
