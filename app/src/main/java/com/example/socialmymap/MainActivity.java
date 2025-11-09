@@ -7,7 +7,9 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,6 +36,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -50,9 +53,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private List<Marker> busStopMarkers = new ArrayList<>();
     private OverlayImage busStopIcon;
+    private Marker longClickMarker; // 롱 클릭으로 생성된 마커를 저장할 변수
 
     private BottomSheetBehavior<View> busArrivalSheetBehavior;
-    private TextView tvBusStopName;
+    private TextView tvBusStopName, tvBusStopInfo, tvSoonArrival;
     private LinearLayout llBusArrivalList;
 
     @Override
@@ -69,7 +73,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         View bottomSheet = findViewById(R.id.bottom_sheet_bus_arrival);
         busArrivalSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+
+        // 화면 높이의 50%를 계산하여 peekHeight로 설정
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int halfScreenHeight = displayMetrics.heightPixels / 2;
+        busArrivalSheetBehavior.setPeekHeight(halfScreenHeight);
+
         tvBusStopName = bottomSheet.findViewById(R.id.tv_bus_stop_name);
+        tvBusStopInfo = bottomSheet.findViewById(R.id.tv_bus_stop_info);
+        tvSoonArrival = bottomSheet.findViewById(R.id.tv_soon_arrival);
         llBusArrivalList = bottomSheet.findViewById(R.id.ll_bus_arrival_list);
         busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
     }
@@ -91,9 +104,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapClickListener((point, coord) -> {
+            // 바텀시트 숨기기
             if (busArrivalSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
                 busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
+            // 롱클릭 마커 숨기기
+            if (longClickMarker != null) {
+                longClickMarker.setMap(null);
+            }
+        });
+
+        // 지도 롱 클릭 리스너
+        this.naverMap.setOnMapLongClickListener((point, coord) -> {
+            if (longClickMarker != null) {
+                longClickMarker.setMap(null); // 기존 마커 제거
+            }
+            longClickMarker = new Marker();
+            longClickMarker.setPosition(coord);
+            longClickMarker.setMap(naverMap); // 새 마커 추가
         });
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
@@ -155,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 } else if (tag.equals("nodeid")) {
                                     xpp.next();
                                     currentBusStop.setNodeId(xpp.getText());
-                                } else if (tag.equals("citycode")) { // 도시코드 파싱 추가
+                                } else if (tag.equals("citycode")) {
                                     xpp.next();
                                     currentBusStop.setCityCode(xpp.getText());
                                 }
@@ -195,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching bus stops", e);
-                runOnUiThread(()-> Toast.makeText(MainActivity.this, "Error fetching bus stops.", Toast.LENGTH_SHORT).show());
             }
         }).start();
     }
@@ -204,10 +231,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (busStop == null || busStop.getCityCode() == null) return;
 
         tvBusStopName.setText(busStop.getName());
+        tvBusStopInfo.setText(busStop.getNodeId() + " | 다음 정류장 방향");
         llBusArrivalList.removeAllViews();
-        TextView loadingView = new TextView(this);
-        loadingView.setText("도착 정보를 불러오는 중...");
-        llBusArrivalList.addView(loadingView);
+        tvSoonArrival.setVisibility(View.GONE);
+
+        // 바텀시트 상태를 COLLAPSED로 변경하여 peekHeight만큼 보이게 함
         busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
         new Thread(() -> {
@@ -221,9 +249,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList");
             urlBuilder.append("?serviceKey=").append(serviceKey);
-            urlBuilder.append("&cityCode=").append(cityCode); // 파라미터로 받은 cityCode 사용
+            urlBuilder.append("&cityCode=").append(cityCode);
             urlBuilder.append("&nodeId=").append(nodeId);
-            urlBuilder.append("&numOfRows=").append("10");
+            urlBuilder.append("&numOfRows=").append("20");
             urlBuilder.append("&pageNo=").append("1");
             urlBuilder.append("&_type=").append("xml");
 
@@ -248,19 +276,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             if (tag.equals("routeno")) {
                                 xpp.next();
                                 currentBusArrival.setRouteNo(xpp.getText());
+                            } else if (tag.equals("routetp")) {
+                                xpp.next();
+                                currentBusArrival.setRouteType(xpp.getText());
                             } else if (tag.equals("arrtime")) {
                                 xpp.next();
-                                currentBusArrival.setArrTime(Integer.parseInt(xpp.getText()));
-                            } else if (tag.equals("arrprevstationcnt")) {
-                                xpp.next();
-                                currentBusArrival.setArrPrevStationCnt(Integer.parseInt(xpp.getText()));
+                                currentBusArrival.addArrTime(Integer.parseInt(xpp.getText()));
                             }
                         }
                         break;
                     case XmlPullParser.END_TAG:
                         tag = xpp.getName();
                         if (tag.equals("item") && currentBusArrival != null) {
-                            resultList.add(currentBusArrival);
+                            boolean merged = false;
+                            for (BusArrival item : resultList) {
+                                if (item.getRouteNo().equals(currentBusArrival.getRouteNo())) {
+                                    item.addArrTime(currentBusArrival.getArrTimes().get(0));
+                                    merged = true;
+                                    break;
+                                }
+                            }
+                            if (!merged) {
+                                resultList.add(currentBusArrival);
+                            }
                         }
                         break;
                 }
@@ -277,21 +315,58 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         llBusArrivalList.removeAllViews();
 
         if (arrivalList == null || arrivalList.isEmpty()) {
+            tvSoonArrival.setVisibility(View.GONE);
             TextView emptyView = new TextView(this);
             emptyView.setText("도착 예정인 버스가 없습니다.");
+            emptyView.setPadding(0, 40, 0, 40);
             llBusArrivalList.addView(emptyView);
             return;
         }
 
-        for (BusArrival info : arrivalList) {
-            TextView busView = new TextView(this);
-            String arrivalText = (info.getArrTime() / 60) + "분 후 도착";
-            String fullText = "🚌 " + info.getRouteNo() + "번 (" + info.getArrPrevStationCnt() + " 정거장 전)\n- " + arrivalText;
+        List<String> soonArrivalBuses = arrivalList.stream()
+                .filter(bus -> bus.getArrTimes().get(0) < 180)
+                .map(BusArrival::getRouteNo)
+                .collect(Collectors.toList());
 
-            busView.setText(fullText);
-            busView.setTextSize(16);
-            busView.setPadding(0, 8, 0, 24);
-            llBusArrivalList.addView(busView);
+        if (!soonArrivalBuses.isEmpty()) {
+            tvSoonArrival.setText("곧 도착 " + String.join(", ", soonArrivalBuses));
+            tvSoonArrival.setVisibility(View.VISIBLE);
+        } else {
+            tvSoonArrival.setVisibility(View.GONE);
+        }
+
+        LayoutInflater inflater = getLayoutInflater();
+        for (BusArrival info : arrivalList) {
+            View itemView = inflater.inflate(R.layout.list_item_bus_arrival, llBusArrivalList, false);
+
+            TextView tvBusType = itemView.findViewById(R.id.tv_bus_type);
+            TextView tvBusNumber = itemView.findViewById(R.id.tv_bus_number);
+            TextView tvArrivalTime1 = itemView.findViewById(R.id.tv_arrival_time_1);
+            TextView tvArrivalTime2 = itemView.findViewById(R.id.tv_arrival_time_2);
+
+            tvBusType.setText(info.getRouteType());
+            tvBusNumber.setText(info.getRouteNo());
+
+            if (!info.getArrTimes().isEmpty()) {
+                int firstTime = info.getArrTimes().get(0);
+                tvArrivalTime1.setText((firstTime / 60) + "분 후 도착");
+                if (firstTime < 180) {
+                    tvArrivalTime1.setText("곧 도착");
+                    tvArrivalTime1.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                } else {
+                    tvArrivalTime1.setTextColor(getResources().getColor(android.R.color.black));
+                }
+            }
+
+            if (info.getArrTimes().size() > 1) {
+                int secondTime = info.getArrTimes().get(1);
+                tvArrivalTime2.setText((secondTime / 60) + "분 후 도착");
+                tvArrivalTime2.setVisibility(View.VISIBLE);
+            } else {
+                tvArrivalTime2.setVisibility(View.GONE);
+            }
+
+            llBusArrivalList.addView(itemView);
         }
     }
 
@@ -331,7 +406,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     class BusStop {
         private double lat, lon;
-        private String name, nodeId, cityCode; // cityCode 추가
+        private String name, nodeId, cityCode;
         public double getLat() { return lat; }
         public void setLat(double lat) { this.lat = lat; }
         public double getLon() { return lon; }
@@ -340,18 +415,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         public void setName(String name) { this.name = name; }
         public String getNodeId() { return nodeId; }
         public void setNodeId(String nodeId) { this.nodeId = nodeId; }
-        public String getCityCode() { return cityCode; } // cityCode getter/setter 추가
+        public String getCityCode() { return cityCode; }
         public void setCityCode(String cityCode) { this.cityCode = cityCode; }
     }
 
     class BusArrival {
         private String routeNo;
-        private int arrTime, arrPrevStationCnt;
+        private String routeType;
+        private List<Integer> arrTimes = new ArrayList<>();
+
         public String getRouteNo() { return routeNo; }
         public void setRouteNo(String routeNo) { this.routeNo = routeNo; }
-        public int getArrTime() { return arrTime; }
-        public void setArrTime(int arrTime) { this.arrTime = arrTime; }
-        public int getArrPrevStationCnt() { return arrPrevStationCnt; }
-        public void setArrPrevStationCnt(int arrPrevStationCnt) { this.arrPrevStationCnt = arrPrevStationCnt; }
+        public String getRouteType() { return routeType; }
+        public void setRouteType(String routeType) { this.routeType = routeType; }
+        public List<Integer> getArrTimes() { return arrTimes; }
+        public void addArrTime(int time) { this.arrTimes.add(time); }
     }
 }
