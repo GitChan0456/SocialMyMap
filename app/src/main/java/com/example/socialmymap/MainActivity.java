@@ -507,8 +507,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
 
+        // 도착 시간 순으로 리스트 정렬
+        arrivalList.sort((o1, o2) -> {
+            if (o1.getArrTimes().isEmpty() || o2.getArrTimes().isEmpty()) return 0;
+            return o1.getArrTimes().get(0).compareTo(o2.getArrTimes().get(0));
+        });
+
+        // '곧 도착' 버스 목록 생성
         List<String> soonArrivalBuses = arrivalList.stream()
-                .filter(bus -> bus.getArrTimes().get(0) < 180)
+                .filter(bus -> !bus.getArrTimes().isEmpty() && bus.getArrTimes().get(0) < 180)
                 .map(BusArrival::getRouteNo)
                 .collect(Collectors.toList());
 
