@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -71,16 +72,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<Marker> busStopMarkers = new ArrayList<>();
     private OverlayImage busStopIcon;
     private Marker longClickMarker;
-    private Marker geocodedMarker; // 검색 결과 마커
+    private Marker geocodedMarker;
 
+    // --- UI Elements ---
     private BottomSheetBehavior<View> busArrivalSheetBehavior;
     private TextView tvBusStopName, tvBusStopInfo, tvSoonArrival;
     private LinearLayout llBusArrivalList;
-    private FloatingActionButton fabCurrentLocation;
 
-    private EditText etAddress;
-    private Button btnGeocode;
-    private Geocoder geocoder;
+    private BottomSheetBehavior<View> placeInfoSheetBehavior;
+    private TextView tvPlaceName, tvPlaceCategory, tvPlaceAddress;
+
+            private FloatingActionButton fabCurrentLocation;
+
+        
+
+            private EditText etAddress;
+
+            private Button btnGeocode;
+
+            private Geocoder geocoder;
 
 
     @Override
@@ -93,37 +103,76 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        geocoder = new Geocoder(this, Locale.KOREA);
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        etAddress = findViewById(R.id.et_address);
-        btnGeocode = findViewById(R.id.btn_geocode);
-        btnGeocode.setOnClickListener(v -> {
-            String address = etAddress.getText().toString();
-            if (!address.isEmpty()) {
-                performGeocoding(address);
-            } else {
-                Toast.makeText(this, "주소를 입력해주세요.", Toast.LENGTH_SHORT).show();
+                geocoder = new Geocoder(this, Locale.KOREA);
+
+        
+
+                etAddress = findViewById(R.id.et_address);
+
+                btnGeocode = findViewById(R.id.btn_geocode);
+
+                btnGeocode.setOnClickListener(v -> {
+
+                    String address = etAddress.getText().toString();
+
+                    if (!address.isEmpty()) {
+
+                        performGeocoding(address);
+
+                    } else {
+
+                        Toast.makeText(this, "주소를 입력해주세요.", Toast.LENGTH_SHORT).show();
+
+                    }
+
+                });
+
+        
+
+                fabCurrentLocation = findViewById(R.id.fab_current_location);
+
+                fabCurrentLocation.setOnClickListener(v -> moveToCurrentLocation());
+
+        // --- BottomSheet Callbacks ---
+        BottomSheetBehavior.BottomSheetCallback bottomSheetCallback = new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    fabCurrentLocation.show();
+                } else {
+                    fabCurrentLocation.hide();
+                }
             }
-        });
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
+        };
 
+        // 버스 도착 정보 바텀시트 초기화 및 콜백 설정
+        View busBottomSheet = findViewById(R.id.bottom_sheet_bus_arrival);
+        busArrivalSheetBehavior = BottomSheetBehavior.from(busBottomSheet);
+        busArrivalSheetBehavior.addBottomSheetCallback(bottomSheetCallback);
+        tvBusStopName = busBottomSheet.findViewById(R.id.tv_bus_stop_name);
+        tvBusStopInfo = busBottomSheet.findViewById(R.id.tv_bus_stop_info);
+        tvSoonArrival = busBottomSheet.findViewById(R.id.tv_soon_arrival);
+        llBusArrivalList = busBottomSheet.findViewById(R.id.ll_bus_arrival_list);
+        busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        fabCurrentLocation = findViewById(R.id.fab_current_location);
-        fabCurrentLocation.setOnClickListener(v -> moveToCurrentLocation());
-
-        View bottomSheet = findViewById(R.id.bottom_sheet_bus_arrival);
-        busArrivalSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        // 장소 정보 바텀시트 초기화 및 콜백 설정
+        View placeBottomSheet = findViewById(R.id.bottom_sheet_place_info);
+        placeInfoSheetBehavior = BottomSheetBehavior.from(placeBottomSheet);
+        placeInfoSheetBehavior.addBottomSheetCallback(bottomSheetCallback);
+        tvPlaceName = placeBottomSheet.findViewById(R.id.tv_place_name);
+        tvPlaceCategory = placeBottomSheet.findViewById(R.id.tv_place_category);
+        tvPlaceAddress = placeBottomSheet.findViewById(R.id.tv_place_address);
+        placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int halfScreenHeight = displayMetrics.heightPixels / 2;
         busArrivalSheetBehavior.setPeekHeight(halfScreenHeight);
-
-        tvBusStopName = bottomSheet.findViewById(R.id.tv_bus_stop_name);
-        tvBusStopInfo = bottomSheet.findViewById(R.id.tv_bus_stop_info);
-        tvSoonArrival = bottomSheet.findViewById(R.id.tv_soon_arrival);
-        llBusArrivalList = bottomSheet.findViewById(R.id.ll_bus_arrival_list);
-        busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        placeInfoSheetBehavior.setPeekHeight(halfScreenHeight);
     }
 
     @Override
@@ -150,6 +199,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         naverMap.setOnMapClickListener((point, coord) -> {
             if (busArrivalSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
                 busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            }
+            if (placeInfoSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
+                placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
             if (longClickMarker != null) {
                 longClickMarker.setMap(null);
@@ -189,6 +241,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         geocodedMarker.setCaptionText(addressString);
                         geocodedMarker.setMap(naverMap);
 
+                        geocodedMarker.setOnClickListener(overlay -> {
+                            showPlaceInfo(point, addressString);
+                            return true;
+                        });
+
                         naverMap.moveCamera(CameraUpdate.scrollTo(point));
                     });
                 } else {
@@ -197,6 +254,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } catch (IOException e) {
                 Log.e(TAG, "Geocoding failed", e);
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "지오코딩 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private void showPlaceInfo(LatLng point, String name) {
+        new Thread(() -> {
+            try {
+                List<Address> addresses = geocoder.getFromLocation(point.latitude, point.longitude, 1);
+                if (addresses != null && !addresses.isEmpty()) {
+                    Address address = addresses.get(0);
+                    String placeName = name;
+                    String category = address.getFeatureName();
+                    String fullAddress = address.getAddressLine(0);
+
+                    runOnUiThread(() -> {
+                        tvPlaceName.setText(placeName);
+                        tvPlaceCategory.setText(category != null ? category : "정보 없음");
+                        tvPlaceAddress.setText(fullAddress);
+                        placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    });
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Reverse Geocoding failed", e);
             }
         }).start();
     }

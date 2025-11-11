@@ -49,5 +49,6 @@
         app:fabSize="auto" />
 
     <include layout="@layout/bottom_sheet_bus_arrival" />
+    <include layout="@layout/bottom_sheet_place_info" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
