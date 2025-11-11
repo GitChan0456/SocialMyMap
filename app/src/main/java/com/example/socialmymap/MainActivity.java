@@ -16,7 +16,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -82,15 +81,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private BottomSheetBehavior<View> placeInfoSheetBehavior;
     private TextView tvPlaceName, tvPlaceCategory, tvPlaceAddress;
 
-            private FloatingActionButton fabCurrentLocation;
-
-        
-
-            private EditText etAddress;
-
-            private Button btnGeocode;
-
-            private Geocoder geocoder;
+    private FloatingActionButton fabCurrentLocation;
+    private EditText etAddress;
+    private Button btnGeocode;
+    private Geocoder geocoder;
 
 
     @Override
@@ -103,40 +97,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
-                fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        geocoder = new Geocoder(this, Locale.KOREA);
 
-                geocoder = new Geocoder(this, Locale.KOREA);
+        // 검색 UI 초기화
+        etAddress = findViewById(R.id.et_address);
+        btnGeocode = findViewById(R.id.btn_geocode);
+        btnGeocode.setOnClickListener(v -> {
+            String address = etAddress.getText().toString();
+            if (!address.isEmpty()) {
+                performGeocoding(address);
+            } else {
+                Toast.makeText(this, "주소를 입력해주세요.", Toast.LENGTH_SHORT).show();
+            }
+        });
 
-        
+        // 현재 위치 버튼 초기화
+        fabCurrentLocation = findViewById(R.id.fab_current_location);
+        fabCurrentLocation.setOnClickListener(v -> moveToCurrentLocation());
 
-                etAddress = findViewById(R.id.et_address);
-
-                btnGeocode = findViewById(R.id.btn_geocode);
-
-                btnGeocode.setOnClickListener(v -> {
-
-                    String address = etAddress.getText().toString();
-
-                    if (!address.isEmpty()) {
-
-                        performGeocoding(address);
-
-                    } else {
-
-                        Toast.makeText(this, "주소를 입력해주세요.", Toast.LENGTH_SHORT).show();
-
-                    }
-
-                });
-
-        
-
-                fabCurrentLocation = findViewById(R.id.fab_current_location);
-
-                fabCurrentLocation.setOnClickListener(v -> moveToCurrentLocation());
-
-        // --- BottomSheet Callbacks ---
-        BottomSheetBehavior.BottomSheetCallback bottomSheetCallback = new BottomSheetBehavior.BottomSheetCallback() {
+        // 버스 도착 정보 바텀시트 초기화
+        View busBottomSheet = findViewById(R.id.bottom_sheet_bus_arrival);
+        busArrivalSheetBehavior = BottomSheetBehavior.from(busBottomSheet);
+        busArrivalSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
                 if (newState == BottomSheetBehavior.STATE_HIDDEN) {
@@ -145,28 +128,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     fabCurrentLocation.hide();
                 }
             }
-            @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
-        };
 
-        // 버스 도착 정보 바텀시트 초기화 및 콜백 설정
-        View busBottomSheet = findViewById(R.id.bottom_sheet_bus_arrival);
-        busArrivalSheetBehavior = BottomSheetBehavior.from(busBottomSheet);
-        busArrivalSheetBehavior.addBottomSheetCallback(bottomSheetCallback);
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                // No action needed while sliding
+            }
+        });
         tvBusStopName = busBottomSheet.findViewById(R.id.tv_bus_stop_name);
         tvBusStopInfo = busBottomSheet.findViewById(R.id.tv_bus_stop_info);
         tvSoonArrival = busBottomSheet.findViewById(R.id.tv_soon_arrival);
         llBusArrivalList = busBottomSheet.findViewById(R.id.ll_bus_arrival_list);
         busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        // 장소 정보 바텀시트 초기화 및 콜백 설정
+        // 장소 정보 바텀시트 초기화
         View placeBottomSheet = findViewById(R.id.bottom_sheet_place_info);
         placeInfoSheetBehavior = BottomSheetBehavior.from(placeBottomSheet);
-        placeInfoSheetBehavior.addBottomSheetCallback(bottomSheetCallback);
         tvPlaceName = placeBottomSheet.findViewById(R.id.tv_place_name);
         tvPlaceCategory = placeBottomSheet.findViewById(R.id.tv_place_category);
         tvPlaceAddress = placeBottomSheet.findViewById(R.id.tv_place_address);
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -241,6 +222,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         geocodedMarker.setCaptionText(addressString);
                         geocodedMarker.setMap(naverMap);
 
+                        // 검색된 마커에 클릭 리스너 설정
                         geocodedMarker.setOnClickListener(overlay -> {
                             showPlaceInfo(point, addressString);
                             return true;
@@ -264,8 +246,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 List<Address> addresses = geocoder.getFromLocation(point.latitude, point.longitude, 1);
                 if (addresses != null && !addresses.isEmpty()) {
                     Address address = addresses.get(0);
-                    String placeName = name;
-                    String category = address.getFeatureName();
+                    String placeName = name; // 검색어로 이름을 대체
+                    String category = address.getFeatureName(); // 임시로 featureName을 카테고리로 사용
                     String fullAddress = address.getAddressLine(0);
 
                     runOnUiThread(() -> {
@@ -507,15 +489,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
 
-        // 도착 시간 순으로 리스트 정렬
-        arrivalList.sort((o1, o2) -> {
-            if (o1.getArrTimes().isEmpty() || o2.getArrTimes().isEmpty()) return 0;
-            return o1.getArrTimes().get(0).compareTo(o2.getArrTimes().get(0));
-        });
-
-        // '곧 도착' 버스 목록 생성
         List<String> soonArrivalBuses = arrivalList.stream()
-                .filter(bus -> !bus.getArrTimes().isEmpty() && bus.getArrTimes().get(0) < 180)
+                .filter(bus -> bus.getArrTimes().get(0) < 180)
                 .map(BusArrival::getRouteNo)
                 .collect(Collectors.toList());
 
