@@ -30,6 +30,7 @@ import com.google.android.gms.location.Priority;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.naver.maps.geometry.LatLng;
+import com.naver.maps.geometry.Tm128;
 import com.naver.maps.map.CameraPosition;
 import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.MapView;
@@ -39,13 +40,18 @@ import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -56,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String TAG = "MainActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
     private static final double MIN_ZOOM_FOR_BUS_STOPS = 15.0;
+
+    private static final String NAVER_SEARCH_CLIENT_ID = "A71elrpOWwaPKzRwR5NH";
+    private static final String NAVER_SEARCH_CLIENT_SECRET = "EZxU2oT_JG";
 
     private ActivityMainBinding binding;
     private MapView mapView;
@@ -69,11 +78,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String serviceKey = "ffM27vy9DGkDka9x8liDumAwewOhqFwXxQTsywa37yJnj5sC1gba%2FgxZhCjct2Ht27OR3uN6WO2To439x55fIA%3D%3D";
 
     private List<Marker> busStopMarkers = new ArrayList<>();
+    private List<Marker> placeMarkers = new ArrayList<>();
     private OverlayImage busStopIcon;
     private Marker longClickMarker;
     private Marker geocodedMarker;
 
-    // --- UI Elements ---
+    // UI Components
     private BottomSheetBehavior<View> busArrivalSheetBehavior;
     private TextView tvBusStopName, tvBusStopInfo, tvSoonArrival;
     private LinearLayout llBusArrivalList;
@@ -83,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private FloatingActionButton fabCurrentLocation;
     private EditText etAddress;
-    private Button btnGeocode;
+    private Button btnGeocode, btnCategoryConvenience, btnCategoryCafe, btnCategorySeowon;
     private Geocoder geocoder;
 
 
@@ -100,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         geocoder = new Geocoder(this, Locale.KOREA);
 
-        // 검색 UI 초기화
+        // Search Bar
         etAddress = findViewById(R.id.et_address);
         btnGeocode = findViewById(R.id.btn_geocode);
         btnGeocode.setOnClickListener(v -> {
@@ -112,11 +122,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        // 현재 위치 버튼 초기화
+        // Category Buttons
+        btnCategoryConvenience = findViewById(R.id.btn_category_convenience);
+        btnCategoryCafe = findViewById(R.id.btn_category_cafe);
+        btnCategorySeowon = findViewById(R.id.btn_category_seowon);
+        btnCategoryConvenience.setOnClickListener(v -> searchNearbyPlaces("편의점"));
+        btnCategoryCafe.setOnClickListener(v -> searchNearbyPlaces("카페"));
+        btnCategorySeowon.setOnClickListener(v -> searchNearbyPlaces("서원대"));
+
+        // FAB
         fabCurrentLocation = findViewById(R.id.fab_current_location);
         fabCurrentLocation.setOnClickListener(v -> moveToCurrentLocation());
 
-        // 버스 도착 정보 바텀시트 초기화
+        // Bus Arrival Bottom Sheet
         View busBottomSheet = findViewById(R.id.bottom_sheet_bus_arrival);
         busArrivalSheetBehavior = BottomSheetBehavior.from(busBottomSheet);
         busArrivalSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -128,11 +146,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     fabCurrentLocation.hide();
                 }
             }
-
             @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                // No action needed while sliding
-            }
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
         });
         tvBusStopName = busBottomSheet.findViewById(R.id.tv_bus_stop_name);
         tvBusStopInfo = busBottomSheet.findViewById(R.id.tv_bus_stop_info);
@@ -140,14 +155,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         llBusArrivalList = busBottomSheet.findViewById(R.id.ll_bus_arrival_list);
         busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        // 장소 정보 바텀시트 초기화
+        // Place Info Bottom Sheet
         View placeBottomSheet = findViewById(R.id.bottom_sheet_place_info);
         placeInfoSheetBehavior = BottomSheetBehavior.from(placeBottomSheet);
+        placeInfoSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    fabCurrentLocation.show();
+                } else {
+                    fabCurrentLocation.hide();
+                }
+            }
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
+        });
         tvPlaceName = placeBottomSheet.findViewById(R.id.tv_place_name);
         tvPlaceCategory = placeBottomSheet.findViewById(R.id.tv_place_category);
         tvPlaceAddress = placeBottomSheet.findViewById(R.id.tv_place_address);
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -219,12 +245,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                         geocodedMarker = new Marker();
                         geocodedMarker.setPosition(point);
-                        geocodedMarker.setCaptionText(addressString);
                         geocodedMarker.setMap(naverMap);
 
-                        // 검색된 마커에 클릭 리스너 설정
+                        // 마커에 클릭 리스너 설정
                         geocodedMarker.setOnClickListener(overlay -> {
-                            showPlaceInfo(point, addressString);
+                            showPlaceInfo(addressString, address.getAddressLine(0));
                             return true;
                         });
 
@@ -240,29 +265,115 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }).start();
     }
 
-    private void showPlaceInfo(LatLng point, String name) {
+    private void showPlaceInfo(String name, String address) {
+        busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN); // 다른 바텀시트 숨기기
+
+        tvPlaceName.setText(name);
+        tvPlaceAddress.setText(address);
+        tvPlaceCategory.setText("검색 결과"); // 카테고리는 일단 임시 텍스트
+        placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    }
+
+
+    private void searchNearbyPlaces(String category) {
+        if (naverMap == null) return;
+        LatLng center = naverMap.getCameraPosition().target;
+
         new Thread(() -> {
             try {
-                List<Address> addresses = geocoder.getFromLocation(point.latitude, point.longitude, 1);
+                List<Address> addresses = geocoder.getFromLocation(center.latitude, center.longitude, 1);
+                String query;
                 if (addresses != null && !addresses.isEmpty()) {
                     Address address = addresses.get(0);
-                    String placeName = name; // 검색어로 이름을 대체
-                    String category = address.getFeatureName(); // 임시로 featureName을 카테고리로 사용
-                    String fullAddress = address.getAddressLine(0);
+                    query = (address.getLocality() != null ? address.getLocality() + " " : "")
+                            + (address.getSubLocality() != null ? address.getSubLocality() + " " : "")
+                            + category;
+                } else {
+                    query = category;
+                }
+
+                String text = URLEncoder.encode(query, "UTF-8");
+                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text + "&display=10&start=1&sort=random";
+
+                Log.d(TAG, "Request URL: " + apiURL);
+
+                URL url = new URL(apiURL);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("GET");
+                con.setRequestProperty("X-Naver-Client-Id", NAVER_SEARCH_CLIENT_ID);
+                con.setRequestProperty("X-Naver-Client-Secret", NAVER_SEARCH_CLIENT_SECRET);
+
+                int responseCode = con.getResponseCode();
+                BufferedReader br;
+                if (responseCode == 200) {
+                    br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                } else {
+                    br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+                }
+
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+                while ((inputLine = br.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                br.close();
+
+                Log.d(TAG, "Response Code: " + responseCode);
+                Log.d(TAG, "Response: " + response.toString());
+
+                if (responseCode == 200) {
+                    JSONObject jsonObject = new JSONObject(response.toString());
+                    JSONArray items = jsonObject.getJSONArray("items");
 
                     runOnUiThread(() -> {
-                        tvPlaceName.setText(placeName);
-                        tvPlaceCategory.setText(category != null ? category : "정보 없음");
-                        tvPlaceAddress.setText(fullAddress);
-                        placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        clearPlaceMarkers();
+                        if (items.length() == 0) {
+                            Toast.makeText(this, "주변에서 '" + category + "' 검색 결과를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        for (int i = 0; i < items.length(); i++) {
+                            try {
+                                JSONObject item = items.getJSONObject(i);
+                                String title = item.getString("title").replaceAll("<[^>]*>", "");
+                                double mapx = Double.parseDouble(item.getString("mapx"));
+                                double mapy = Double.parseDouble(item.getString("mapy"));
+
+                                double longitude = mapx / 10000000.0;
+                                double latitude = mapy / 10000000.0;
+                                LatLng latLng = new LatLng(latitude, longitude);
+
+                                Marker marker = new Marker();
+                                marker.setPosition(latLng);
+                                marker.setCaptionText(title);
+                                marker.setIcon(OverlayImage.fromResource(com.naver.maps.map.R.drawable.navermap_default_marker_icon_yellow));
+                                marker.setMap(naverMap);
+                                placeMarkers.add(marker);
+
+                            } catch (Exception e) {
+                                Log.e(TAG, "JSON parsing error", e);
+                            }
+                        }
                     });
+                } else {
+                    Log.e(TAG, "Naver Search API Error: " + response.toString());
+                    runOnUiThread(() -> Toast.makeText(this, "검색 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
                 }
-            } catch (IOException e) {
-                Log.e(TAG, "Reverse Geocoding failed", e);
+
+            } catch (Exception e) {
+                Log.e(TAG, "searchNearbyPlaces error", e);
+                runOnUiThread(() -> Toast.makeText(this, "검색 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
             }
         }).start();
     }
 
+
+    private void clearPlaceMarkers() {
+        for (Marker marker : placeMarkers) {
+            marker.setMap(null);
+        }
+        placeMarkers.clear();
+    }
 
     private void checkLocationPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
@@ -396,6 +507,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void showBusArrivalInfo(BusStop busStop) {
         if (busStop == null || busStop.getCityCode() == null) return;
+
+        placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN); // 다른 바텀시트 숨기기
 
         tvBusStopName.setText(busStop.getName());
         tvBusStopInfo.setText(busStop.getNodeId() + " | 다음 정류장 방향");

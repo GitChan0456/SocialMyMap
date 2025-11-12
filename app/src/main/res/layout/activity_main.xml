@@ -10,25 +10,66 @@
         android:id="@+id/search_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:padding="8dp"
         android:background="@android:color/white"
         android:elevation="4dp">
 
-        <EditText
-            android:id="@+id/et_address"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="주소 또는 장소 검색"
-            android:inputType="text"
-            android:maxLines="1" />
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/et_address"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="주소 또는 장소 검색"
+                android:inputType="text"
+                android:maxLines="1" />
 
-        <Button
-            android:id="@+id/btn_geocode"
-            android:layout_width="wrap_content"
+            <Button
+                android:id="@+id/btn_geocode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="검색" />
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:id="@+id/category_scroll_view"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="검색" />
+            android:layout_marginTop="8dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/category_buttons_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_category_convenience"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="편의점"
+                    android:layout_marginEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btn_category_cafe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="카페"
+                    android:layout_marginEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btn_category_seowon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="서원대"
+                    android:layout_marginEnd="8dp" />
+            </LinearLayout>
+        </HorizontalScrollView>
     </LinearLayout>
 
     <com.naver.maps.map.MapView
