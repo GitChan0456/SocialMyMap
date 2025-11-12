@@ -91,9 +91,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private BottomSheetBehavior<View> placeInfoSheetBehavior;
     private TextView tvPlaceName, tvPlaceCategory, tvPlaceAddress;
 
+    private BottomSheetBehavior<View> mainMenuSheetBehavior;
+
     private FloatingActionButton fabCurrentLocation;
     private EditText etAddress;
-    private Button btnGeocode, btnCategoryConvenience, btnCategoryCafe, btnCategorySeowon;
+    private Button btnGeocode, btnCategoryConvenience, btnCategoryCafe, btnCategorySeowon, btnCategoryBank;
     private Geocoder geocoder;
 
 
@@ -126,9 +128,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnCategoryConvenience = findViewById(R.id.btn_category_convenience);
         btnCategoryCafe = findViewById(R.id.btn_category_cafe);
         btnCategorySeowon = findViewById(R.id.btn_category_seowon);
+        btnCategoryBank = findViewById(R.id.btn_category_bank);
         btnCategoryConvenience.setOnClickListener(v -> searchNearbyPlaces("편의점"));
         btnCategoryCafe.setOnClickListener(v -> searchNearbyPlaces("카페"));
         btnCategorySeowon.setOnClickListener(v -> searchNearbyPlaces("병원"));
+        btnCategoryBank.setOnClickListener(v -> {
+            if (mainMenuSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
+                mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else {
+                mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            }
+        });
+
 
         // FAB
         fabCurrentLocation = findViewById(R.id.fab_current_location);
@@ -175,6 +186,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         tvPlaceAddress = placeBottomSheet.findViewById(R.id.tv_place_address);
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
+        // Main Menu Bottom Sheet
+        View mainMenuBottomSheet = findViewById(R.id.bottom_sheet_main_menu);
+        mainMenuSheetBehavior = BottomSheetBehavior.from(mainMenuBottomSheet);
+        mainMenuSheetBehavior.setPeekHeight(100); // 핸들이 보일 정도의 높이
+        mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED); // 초기 상태는 살짝 보이게
+
+        // "+" 버튼 클릭 시 메뉴 펼치기/접기
+        btnCategoryBank.setOnClickListener(v -> {
+            if (mainMenuSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
+                mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else {
+                mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
+        });
+
+        LinearLayout btnNav = mainMenuBottomSheet.findViewById(R.id.btn_feature_1);
+        LinearLayout btnSearch = mainMenuBottomSheet.findViewById(R.id.btn_feature_2);
+        LinearLayout btnFav = mainMenuBottomSheet.findViewById(R.id.btn_feature_3);
+        LinearLayout btnBus = mainMenuBottomSheet.findViewById(R.id.btn_feature_4);
+        LinearLayout btnMyPage = mainMenuBottomSheet.findViewById(R.id.btn_feature_5);
+        LinearLayout btnSettings = mainMenuBottomSheet.findViewById(R.id.btn_feature_6);
+        Button btnLogout = mainMenuBottomSheet.findViewById(R.id.logout_button);
+
+        btnNav.setOnClickListener(v -> Toast.makeText(this, "길찾기 기능", Toast.LENGTH_SHORT).show());
+        btnSearch.setOnClickListener(v -> Toast.makeText(this, "주변장소 탐색", Toast.LENGTH_SHORT).show());
+        btnFav.setOnClickListener(v -> Toast.makeText(this, "즐겨찾는 장소", Toast.LENGTH_SHORT).show());
+        btnBus.setOnClickListener(v -> Toast.makeText(this, "버스 정보", Toast.LENGTH_SHORT).show());
+        btnMyPage.setOnClickListener(v -> Toast.makeText(this, "마이페이지", Toast.LENGTH_SHORT).show());
+        btnSettings.setOnClickListener(v -> Toast.makeText(this, "설정", Toast.LENGTH_SHORT).show());
+        btnLogout.setOnClickListener(v -> Toast.makeText(this, "로그아웃", Toast.LENGTH_SHORT).show());
+
+
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int halfScreenHeight = displayMetrics.heightPixels / 2;
@@ -204,24 +247,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapClickListener((point, coord) -> {
-            // 1. 정보 창(바텀시트)이 열려있는지 확인하고, 열려있다면 닫기만 함
             if (busArrivalSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
                 busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-                return; // 마커를 지우지 않고 리스너 종료
+                return;
             }
             if (placeInfoSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
                 placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-                return; // 마커를 지우지 않고 리스너 종료
+                return;
             }
 
-            // 2. 정보 창이 모두 닫혀있을 때만 마커들을 지움
             if (longClickMarker != null) {
                 longClickMarker.setMap(null);
             }
             if (geocodedMarker != null) {
                 geocodedMarker.setMap(null);
             }
-            clearPlaceMarkers(); // 주변 장소 마커 숨기기
+            clearPlaceMarkers();
         });
 
         this.naverMap.setOnMapLongClickListener((point, coord) -> {
@@ -233,17 +274,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             longClickMarker.setIcon(OverlayImage.fromResource(com.naver.maps.map.R.drawable.navermap_default_marker_icon_blue));
             longClickMarker.setMap(naverMap);
 
-            // 리버스 지오코딩 실행
             new Thread(() -> {
                 try {
                     List<Address> addresses = geocoder.getFromLocation(coord.latitude, coord.longitude, 1);
                     if (addresses != null && !addresses.isEmpty()) {
                         Address address = addresses.get(0);
-                        // 마커에 주소 정보 저장
                         longClickMarker.setTag(address);
 
                         runOnUiThread(() -> {
-                            // 마커에 클릭 리스너 설정
                             longClickMarker.setOnClickListener(overlay -> {
                                 Address clickedAddress = (Address) overlay.getTag();
                                 String placeName = clickedAddress.getFeatureName() != null ? clickedAddress.getFeatureName() : "이름 없는 장소";
@@ -277,7 +315,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         geocodedMarker.setPosition(point);
                         geocodedMarker.setMap(naverMap);
 
-                        // 마커에 클릭 리스너 설정
                         geocodedMarker.setOnClickListener(overlay -> {
                             showPlaceInfo(addressString, address.getAddressLine(0), "검색 결과");
                             return true;
@@ -323,7 +360,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 String text = URLEncoder.encode(query, "UTF-8");
-                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text + "&display=30&start=1&sort=random";
+                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text + "&display=10&start=1&sort=random";
 
                 Log.d(TAG, "Request URL: " + apiURL);
 
@@ -378,7 +415,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 marker.setCaptionText(title);
                                 marker.setIcon(OverlayImage.fromResource(com.naver.maps.map.R.drawable.navermap_default_marker_icon_yellow));
                                 marker.setMap(naverMap);
-                                // 마커에 클릭 리스너 설정
+
                                 marker.setOnClickListener(overlay -> {
                                     try {
                                         showPlaceInfo(item.getString("title").replaceAll("<[^>]*>", ""),
@@ -395,8 +432,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 Log.e(TAG, "JSON parsing error", e);
                             }
                         }
-                        // 줌 레벨 변경
-                        naverMap.moveCamera(CameraUpdate.zoomTo(14.0));
+                        naverMap.moveCamera(CameraUpdate.zoomTo(20.0));
                     });
                 } else {
                     Log.e(TAG, "Naver Search API Error: " + response.toString());
@@ -551,7 +587,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void showBusArrivalInfo(BusStop busStop) {
         if (busStop == null || busStop.getCityCode() == null) return;
 
-        placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN); // 다른 바텀시트 숨기기
+        placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         tvBusStopName.setText(busStop.getName());
         tvBusStopInfo.setText(busStop.getNodeId() + " | 다음 정류장 방향");
