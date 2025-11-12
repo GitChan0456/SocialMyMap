@@ -191,6 +191,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mainMenuSheetBehavior = BottomSheetBehavior.from(mainMenuBottomSheet);
         mainMenuSheetBehavior.setPeekHeight(100); // 핸들이 보일 정도의 높이
         mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED); // 초기 상태는 살짝 보이게
+        mainMenuSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                    fabCurrentLocation.show();
+                } else {
+                    fabCurrentLocation.hide();
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                // No action
+            }
+        });
 
         // "+" 버튼 클릭 시 메뉴 펼치기/접기
         btnCategoryBank.setOnClickListener(v -> {
