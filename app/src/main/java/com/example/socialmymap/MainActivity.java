@@ -217,8 +217,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnNav.setOnClickListener(v -> Toast.makeText(this, "길찾기 기능", Toast.LENGTH_SHORT).show());
         btnSearch.setOnClickListener(v -> {
             searchBar.setVisibility(View.GONE);
-            mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            Toast.makeText(this, "지도 집중 모드 해제는 더블탭입니다.", Toast.LENGTH_SHORT).show();
+            mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            Toast.makeText(this, "지도 집중 모드", Toast.LENGTH_SHORT).show();
         });
         btnFav.setOnClickListener(v -> Toast.makeText(this, "즐겨찾는 장소", Toast.LENGTH_SHORT).show());
         btnBus.setOnClickListener(v -> Toast.makeText(this, "커뮤니티", Toast.LENGTH_SHORT).show());
@@ -385,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 String text = URLEncoder.encode(query, "UTF-8");
-                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text + "&display=10&start=1&sort=random";
+                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text + "&display=30&start=1&sort=random";
 
                 Log.d(TAG, "Request URL: " + apiURL);
 
