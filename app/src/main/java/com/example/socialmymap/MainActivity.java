@@ -39,6 +39,7 @@ import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
+import com.naver.maps.map.overlay.PolylineOverlay;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -49,6 +50,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -65,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private static final String NAVER_SEARCH_CLIENT_ID = "A71elrpOWwaPKzRwR5NH";
     private static final String NAVER_SEARCH_CLIENT_SECRET = "EZxU2oT_JG";
+    private static final String TMAP_APP_KEY = "MRXykLttAL6XbvFba0XGcan8Pu2WM9au6AN0LBNh";
 
     private ActivityMainBinding binding;
     private MapView mapView;
@@ -78,10 +81,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String serviceKey = "ffM27vy9DGkDka9x8liDumAwewOhqFwXxQTsywa37yJnj5sC1gba%2FgxZhCjct2Ht27OR3uN6WO2To439x55fIA%3D%3D";
 
     private List<Marker> busStopMarkers = new ArrayList<>();
-    private List<Marker> placeMarkers = new ArrayList<>(); // 장소 검색 마커 리스트
-    private List<Marker> longClickMarkers = new ArrayList<>(); // 롱클릭 마커 리스트
+    private List<Marker> placeMarkers = new ArrayList<>();
+    private List<Marker> longClickMarkers = new ArrayList<>();
     private OverlayImage busStopIcon;
     private Marker geocodedMarker;
+    private PolylineOverlay currentRouteOverlay;
 
     // UI Components
     private LinearLayout searchBar;
@@ -91,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private BottomSheetBehavior<View> placeInfoSheetBehavior;
     private TextView tvPlaceName, tvPlaceCategory, tvPlaceAddress;
+    private Button btnStart, btnArrive;
 
     private BottomSheetBehavior<View> mainMenuSheetBehavior;
 
@@ -186,6 +191,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         tvPlaceName = placeBottomSheet.findViewById(R.id.tv_place_name);
         tvPlaceCategory = placeBottomSheet.findViewById(R.id.tv_place_category);
         tvPlaceAddress = placeBottomSheet.findViewById(R.id.tv_place_address);
+        btnStart = placeBottomSheet.findViewById(R.id.btn_start);
+        btnArrive = placeBottomSheet.findViewById(R.id.btn_arrive);
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         // Main Menu Bottom Sheet
@@ -217,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnNav.setOnClickListener(v -> Toast.makeText(this, "길찾기 기능", Toast.LENGTH_SHORT).show());
         btnSearch.setOnClickListener(v -> {
             searchBar.setVisibility(View.GONE);
-            mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             Toast.makeText(this, "지도 집중 모드", Toast.LENGTH_SHORT).show();
         });
         btnFav.setOnClickListener(v -> Toast.makeText(this, "즐겨찾는 장소", Toast.LENGTH_SHORT).show());
@@ -265,7 +272,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return;
             }
 
-            // 2. 정보 창이 모두 닫혀있을 때만 마커들을 지움
             if (!longClickMarkers.isEmpty()) {
                 for(Marker marker : longClickMarkers) {
                     marker.setMap(null);
@@ -275,18 +281,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (geocodedMarker != null) {
                 geocodedMarker.setMap(null);
             }
-            clearPlaceMarkers(); // 주변 장소 마커 숨기기
+            clearPlaceMarkers();
         });
 
         naverMap.setOnMapDoubleTapListener((point, coord) -> {
             if (searchBar.getVisibility() == View.GONE) {
                 searchBar.setVisibility(View.VISIBLE);
+                mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
             return true;
         });
 
         this.naverMap.setOnMapLongClickListener((point, coord) -> {
-            // 마커가 3개 이상이면 가장 오래된 마커를 제거
             if (longClickMarkers.size() >= 3) {
                 Marker oldestMarker = longClickMarkers.remove(0);
                 oldestMarker.setMap(null);
@@ -296,9 +302,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             newMarker.setPosition(coord);
             newMarker.setIcon(OverlayImage.fromResource(com.naver.maps.map.R.drawable.navermap_default_marker_icon_blue));
             newMarker.setMap(naverMap);
-            longClickMarkers.add(newMarker); // 새 마커를 리스트에 추가
+            longClickMarkers.add(newMarker);
 
-            // 리버스 지오코딩 및 클릭 리스너 설정 (새 마커에 대해)
             new Thread(() -> {
                 try {
                     List<Address> addresses = geocoder.getFromLocation(coord.latitude, coord.longitude, 1);
@@ -310,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             newMarker.setOnClickListener(overlay -> {
                                 Address clickedAddress = (Address) overlay.getTag();
                                 String placeName = clickedAddress.getFeatureName() != null ? clickedAddress.getFeatureName() : "이름 없는 장소";
-                                showPlaceInfo(placeName, clickedAddress.getAddressLine(0), "선택한 위치");
+                                showPlaceInfo(placeName, clickedAddress.getAddressLine(0), "선택한 위치", coord);
                                 return true;
                             });
                         });
@@ -341,7 +346,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         geocodedMarker.setMap(naverMap);
 
                         geocodedMarker.setOnClickListener(overlay -> {
-                            showPlaceInfo(addressString, address.getAddressLine(0), "검색 결과");
+                            showPlaceInfo(addressString, address.getAddressLine(0), "검색 결과", point);
                             return true;
                         });
 
@@ -357,12 +362,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }).start();
     }
 
-    private void showPlaceInfo(String name, String address, String category) {
+    private void showPlaceInfo(String name, String address, String category, LatLng destination) {
         busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         tvPlaceName.setText(name);
         tvPlaceAddress.setText(address);
         tvPlaceCategory.setText(category);
+
+        btnArrive.setOnClickListener(v -> {
+            if (locationOverlay.getPosition() != null) {
+                requestTmapPedestrianRoute(locationOverlay.getPosition(), destination);
+            } else {
+                Toast.makeText(this, "현재 위치를 알 수 없어 경로를 요청할 수 없습니다.", Toast.LENGTH_SHORT).show();
+            }
+            placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        });
+
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
@@ -385,7 +400,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 String text = URLEncoder.encode(query, "UTF-8");
-                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text + "&display=30&start=1&sort=random";
+                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text + "&display=10&start=1&sort=random";
 
                 Log.d(TAG, "Request URL: " + apiURL);
 
@@ -428,6 +443,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             try {
                                 JSONObject item = items.getJSONObject(i);
                                 String title = item.getString("title").replaceAll("<[^>]*>", "");
+                                String address = item.getString("address");
+                                String itemCategory = item.getString("category");
                                 double mapx = Double.parseDouble(item.getString("mapx"));
                                 double mapy = Double.parseDouble(item.getString("mapy"));
 
@@ -442,13 +459,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 marker.setMap(naverMap);
 
                                 marker.setOnClickListener(overlay -> {
-                                    try {
-                                        showPlaceInfo(item.getString("title").replaceAll("<[^>]*>", ""),
-                                                item.getString("address"),
-                                                item.getString("category"));
-                                    } catch (Exception e) {
-                                        Log.e(TAG, "Marker click error", e);
-                                    }
+                                    showPlaceInfo(title, address, itemCategory, latLng);
                                     return true;
                                 });
                                 placeMarkers.add(marker);
@@ -457,7 +468,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 Log.e(TAG, "JSON parsing error", e);
                             }
                         }
-                        naverMap.moveCamera(CameraUpdate.zoomTo(14.0));
+                        naverMap.moveCamera(CameraUpdate.zoomTo(20.0));
                     });
                 } else {
                     Log.e(TAG, "Naver Search API Error: " + response.toString());
@@ -467,6 +478,85 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } catch (Exception e) {
                 Log.e(TAG, "searchNearbyPlaces error", e);
                 runOnUiThread(() -> Toast.makeText(this, "검색 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private void requestTmapPedestrianRoute(LatLng start, LatLng end) {
+        new Thread(() -> {
+            try {
+                String url = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result";
+                HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json");
+                con.setRequestProperty("appKey", TMAP_APP_KEY);
+                con.setDoOutput(true);
+
+                JSONObject payload = new JSONObject();
+                payload.put("startX", String.valueOf(start.longitude));
+                payload.put("startY", String.valueOf(start.latitude));
+                payload.put("endX", String.valueOf(end.longitude));
+                payload.put("endY", String.valueOf(end.latitude));
+                payload.put("reqCoordType", "WGS84GEO");
+                payload.put("resCoordType", "WGS84GEO");
+                payload.put("startName", "출발지");
+                payload.put("endName", "도착지");
+
+                OutputStream os = con.getOutputStream();
+                os.write(payload.toString().getBytes("UTF-8"));
+                os.close();
+
+                int responseCode = con.getResponseCode();
+                BufferedReader br;
+                if (responseCode == 200) {
+                    br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                } else {
+                    br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+                }
+
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+                while ((inputLine = br.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                br.close();
+
+                Log.d(TAG, "TMAP Response: " + response.toString());
+
+                if (responseCode == 200) {
+                    List<LatLng> pathPoints = new ArrayList<>();
+                    JSONObject jsonObject = new JSONObject(response.toString());
+                    JSONArray features = jsonObject.getJSONArray("features");
+                    for (int i = 0; i < features.length(); i++) {
+                        JSONObject feature = features.getJSONObject(i);
+                        JSONObject geometry = feature.getJSONObject("geometry");
+                        String type = geometry.getString("type");
+                        JSONArray coordinates = geometry.getJSONArray("coordinates");
+
+                        if (type.equals("LineString")) {
+                            for (int j = 0; j < coordinates.length(); j++) {
+                                JSONArray coord = coordinates.getJSONArray(j);
+                                pathPoints.add(new LatLng(coord.getDouble(1), coord.getDouble(0)));
+                            }
+                        }
+                    }
+
+                    runOnUiThread(() -> {
+                        if (currentRouteOverlay != null) {
+                            currentRouteOverlay.setMap(null);
+                        }
+                        if (!pathPoints.isEmpty()) {
+                            currentRouteOverlay = new PolylineOverlay();
+                            currentRouteOverlay.setCoords(pathPoints);
+                            currentRouteOverlay.setWidth(10);
+                            currentRouteOverlay.setColor(0xFF0000FF); // Blue color
+                            currentRouteOverlay.setMap(naverMap);
+                        }
+                    });
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "TMAP API Error", e);
             }
         }).start();
     }
