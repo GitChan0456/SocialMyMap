@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="길찾기"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/et_start_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="출발지"
+        android:text="서원대학교"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/et_end_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="도착지"
+        android:layout_marginBottom="16dp"/>
+
+    <RadioGroup
+        android:id="@+id/rg_transport_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <RadioButton
+            android:id="@+id/rb_walk"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="도보"
+            android:checked="true"/>
+
+        <RadioButton
+            android:id="@+id/rb_car"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="자동차"/>
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/btn_find_route"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="경로 탐색"/>
+
+</LinearLayout>

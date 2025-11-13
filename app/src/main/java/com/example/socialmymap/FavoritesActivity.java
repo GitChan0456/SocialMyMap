@@ -1,7 +1,10 @@
 package com.example.socialmymap;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -15,13 +18,26 @@ public class FavoritesActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+
+        LinearLayout llSeowonUniv = findViewById(R.id.ll_seowon_univ);
+        LinearLayout llMyHome = findViewById(R.id.ll_my_home);
+
+        llSeowonUniv.setOnClickListener(v -> returnToMainActivity("서원대학교", "충북 청주시 서원구 무심서로 377-3"));
+        llMyHome.setOnClickListener(v -> returnToMainActivity("우리집", "충북 청주시 서원구 1순환로 123"));
     }
 
-    // 뒤로가기 버튼 동작 처리
+    private void returnToMainActivity(String placeName, String address) {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("placeName", placeName);
+        resultIntent.putExtra("address", address);
+        setResult(RESULT_OK, resultIntent);
+        finish();
+    }
+
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            finish(); // 현재 액티비티 종료
+            finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
