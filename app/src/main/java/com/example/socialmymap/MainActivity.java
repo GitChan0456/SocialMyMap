@@ -8,6 +8,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.DisplayMetrics;
@@ -227,10 +228,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             Toast.makeText(this, "지도 집중 모드", Toast.LENGTH_SHORT).show();
         });
-        btnFav.setOnClickListener(v -> Toast.makeText(this, "즐겨찾는 장소", Toast.LENGTH_SHORT).show());
-        btnBus.setOnClickListener(v -> Toast.makeText(this, "커뮤니티", Toast.LENGTH_SHORT).show());
-        btnMyPage.setOnClickListener(v -> Toast.makeText(this, "마이페이지", Toast.LENGTH_SHORT).show());
-        btnSettings.setOnClickListener(v -> Toast.makeText(this, "설정", Toast.LENGTH_SHORT).show());
+        btnFav.setOnClickListener(v -> startActivity(new Intent(this, FavoritesActivity.class)));
+        btnMyPage.setOnClickListener(v -> startActivity(new Intent(this, MyPageActivity.class)));
+        btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnLogout.setOnClickListener(v -> Toast.makeText(this, "로그아웃", Toast.LENGTH_SHORT).show());
 
 
@@ -285,7 +285,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapDoubleTapListener((point, coord) -> {
-            if (searchBar.getVisibility() == View.GONE) {
+            // 경로선이 그려져 있으면 경로 취소
+            if (currentRouteOverlay != null && currentRouteOverlay.getMap() != null) {
+                currentRouteOverlay.setMap(null);
+                Toast.makeText(this, "경로 안내가 취소되었습니다.", Toast.LENGTH_SHORT).show();
+            }
+            // 지도 집중 모드 해제
+            else if (searchBar.getVisibility() == View.GONE) {
                 searchBar.setVisibility(View.VISIBLE);
                 mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
@@ -468,7 +474,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 Log.e(TAG, "JSON parsing error", e);
                             }
                         }
-                        naverMap.moveCamera(CameraUpdate.zoomTo(20.0));
+                        naverMap.moveCamera(CameraUpdate.zoomTo(14.0));
                     });
                 } else {
                     Log.e(TAG, "Naver Search API Error: " + response.toString());
@@ -549,7 +555,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             currentRouteOverlay = new PolylineOverlay();
                             currentRouteOverlay.setCoords(pathPoints);
                             currentRouteOverlay.setWidth(10);
-                            currentRouteOverlay.setColor(0xFF0000FF); // Blue color
+                            currentRouteOverlay.setColor(0xFF0000FF); // Blue
                             currentRouteOverlay.setMap(naverMap);
                         }
                     });
