@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -222,7 +223,66 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LinearLayout btnSettings = mainMenuBottomSheet.findViewById(R.id.btn_feature_6);
         Button btnLogout = mainMenuBottomSheet.findViewById(R.id.logout_button);
 
-        btnNav.setOnClickListener(v -> Toast.makeText(this, "길찾기 기능", Toast.LENGTH_SHORT).show());
+        btnNav.setOnClickListener(v -> {
+            final View dialogView = getLayoutInflater().inflate(R.layout.dialog_directions, null);
+            final android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            builder.setView(dialogView);
+            final android.app.AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+
+            EditText etStart = dialogView.findViewById(R.id.et_start_location);
+            EditText etEnd = dialogView.findViewById(R.id.et_end_location);
+            Button btnFindRoute = dialogView.findViewById(R.id.btn_find_route);
+            RadioGroup rgTransportMode = dialogView.findViewById(R.id.rg_transport_mode);
+
+            // 출발지에 현재 위치 주소 채우기 (선택 사항)
+            if(locationOverlay.getPosition() != null) {
+                // 이 부분은 리버스 지오코딩이 필요하여 시간이 걸리므로, 일단 "현재 위치"로 둡니다.
+            }
+
+            btnFindRoute.setOnClickListener(view -> {
+                String startLocationName = etStart.getText().toString();
+                String endLocationName = etEnd.getText().toString();
+
+                if (startLocationName.isEmpty() || endLocationName.isEmpty()) {
+                    Toast.makeText(this, "출발지와 목적지를 모두 입력해주세요.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                new Thread(() -> {
+                    try {
+                        LatLng startPoint;
+                        // 출발지가 "현재 위치"이면, 현재 위치 좌표 사용
+                        if (startLocationName.equals("현재 위치") && locationOverlay.getPosition() != null) {
+                            startPoint = locationOverlay.getPosition();
+                        } else {
+                            List<Address> startAddresses = geocoder.getFromLocationName(startLocationName, 1);
+                            if (startAddresses == null || startAddresses.isEmpty()) {
+                                runOnUiThread(() -> Toast.makeText(this, "출발지 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show());
+                                return;
+                            }
+                            startPoint = new LatLng(startAddresses.get(0).getLatitude(), startAddresses.get(0).getLongitude());
+                        }
+
+                        List<Address> endAddresses = geocoder.getFromLocationName(endLocationName, 1);
+                        if (endAddresses == null || endAddresses.isEmpty()) {
+                            runOnUiThread(() -> Toast.makeText(this, "도착지 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show());
+                            return;
+                        }
+                        LatLng endPoint = new LatLng(endAddresses.get(0).getLatitude(), endAddresses.get(0).getLongitude());
+
+                        // TMAP 경로 요청
+                        requestTmapPedestrianRoute(startPoint, endPoint);
+
+                    } catch (IOException e) {
+                        Log.e(TAG, "Geocoding failed for directions", e);
+                        runOnUiThread(() -> Toast.makeText(this, "주소 변환 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+                    }
+                }).start();
+
+                alertDialog.dismiss();
+            });
+        });
         btnSearch.setOnClickListener(v -> {
             searchBar.setVisibility(View.GONE);
             mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -231,7 +291,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnFav.setOnClickListener(v -> startActivity(new Intent(this, FavoritesActivity.class)));
         btnMyPage.setOnClickListener(v -> startActivity(new Intent(this, MyPageActivity.class)));
         btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
-        btnLogout.setOnClickListener(v -> Toast.makeText(this, "로그아웃", Toast.LENGTH_SHORT).show());
+        btnLogout.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish(); // MainActivity 종료
+        });
 
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
