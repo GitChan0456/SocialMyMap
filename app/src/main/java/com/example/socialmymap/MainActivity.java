@@ -235,11 +235,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Button btnFindRoute = dialogView.findViewById(R.id.btn_find_route);
             RadioGroup rgTransportMode = dialogView.findViewById(R.id.rg_transport_mode);
 
-            // 출발지에 현재 위치 주소 채우기 (선택 사항)
-            if(locationOverlay.getPosition() != null) {
-                // 이 부분은 리버스 지오코딩이 필요하여 시간이 걸리므로, 일단 "현재 위치"로 둡니다.
-            }
-
             btnFindRoute.setOnClickListener(view -> {
                 String startLocationName = etStart.getText().toString();
                 String endLocationName = etEnd.getText().toString();
@@ -249,12 +244,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return;
                 }
 
+                int selectedId = rgTransportMode.getCheckedRadioButtonId();
+                if (selectedId != R.id.rb_walk) {
+                    Toast.makeText(this, "현재는 도보 길찾기만 지원합니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 new Thread(() -> {
                     try {
                         LatLng startPoint;
-                        // 출발지가 "현재 위치"이면, 현재 위치 좌표 사용
-                        if (startLocationName.equals("현재 위치") && locationOverlay.getPosition() != null) {
-                            startPoint = locationOverlay.getPosition();
+                        if (startLocationName.equals("현재 위치")) {
+                            if (locationOverlay.getPosition() != null) {
+                                startPoint = locationOverlay.getPosition();
+                            } else {
+                                runOnUiThread(() -> Toast.makeText(this, "현재 위치를 사용할 수 없습니다.", Toast.LENGTH_SHORT).show());
+                                return;
+                            }
                         } else {
                             List<Address> startAddresses = geocoder.getFromLocationName(startLocationName, 1);
                             if (startAddresses == null || startAddresses.isEmpty()) {
@@ -271,7 +276,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                         LatLng endPoint = new LatLng(endAddresses.get(0).getLatitude(), endAddresses.get(0).getLongitude());
 
-                        // TMAP 경로 요청
                         requestTmapPedestrianRoute(startPoint, endPoint);
 
                     } catch (IOException e) {
