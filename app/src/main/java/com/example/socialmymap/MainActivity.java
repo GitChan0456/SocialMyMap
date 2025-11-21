@@ -1,14 +1,18 @@
 package com.example.socialmymap;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.DisplayMetrics;
@@ -65,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private static final String TAG = "MainActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
+    private static final int REQUEST_CODE_FAVORITES = 1001;
     private static final double MIN_ZOOM_FOR_BUS_STOPS = 15.0;
 
     private static final String NAVER_SEARCH_CLIENT_ID = "A71elrpOWwaPKzRwR5NH";
@@ -223,83 +228,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LinearLayout btnSettings = mainMenuBottomSheet.findViewById(R.id.btn_feature_6);
         Button btnLogout = mainMenuBottomSheet.findViewById(R.id.logout_button);
 
-        btnNav.setOnClickListener(v -> {
-            final View dialogView = getLayoutInflater().inflate(R.layout.dialog_directions, null);
-            final android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-            builder.setView(dialogView);
-            final android.app.AlertDialog alertDialog = builder.create();
-            alertDialog.show();
-
-            EditText etStart = dialogView.findViewById(R.id.et_start_location);
-            EditText etEnd = dialogView.findViewById(R.id.et_end_location);
-            Button btnFindRoute = dialogView.findViewById(R.id.btn_find_route);
-            RadioGroup rgTransportMode = dialogView.findViewById(R.id.rg_transport_mode);
-
-            btnFindRoute.setOnClickListener(view -> {
-                String startLocationName = etStart.getText().toString();
-                String endLocationName = etEnd.getText().toString();
-
-                if (startLocationName.isEmpty() || endLocationName.isEmpty()) {
-                    Toast.makeText(this, "출발지와 목적지를 모두 입력해주세요.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                int selectedId = rgTransportMode.getCheckedRadioButtonId();
-                if (selectedId != R.id.rb_walk) {
-                    Toast.makeText(this, "현재는 도보 길찾기만 지원합니다.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                new Thread(() -> {
-                    try {
-                        LatLng startPoint;
-                        if (startLocationName.equals("현재 위치")) {
-                            if (locationOverlay.getPosition() != null) {
-                                startPoint = locationOverlay.getPosition();
-                            } else {
-                                runOnUiThread(() -> Toast.makeText(this, "현재 위치를 사용할 수 없습니다.", Toast.LENGTH_SHORT).show());
-                                return;
-                            }
-                        } else {
-                            List<Address> startAddresses = geocoder.getFromLocationName(startLocationName, 1);
-                            if (startAddresses == null || startAddresses.isEmpty()) {
-                                runOnUiThread(() -> Toast.makeText(this, "출발지 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show());
-                                return;
-                            }
-                            startPoint = new LatLng(startAddresses.get(0).getLatitude(), startAddresses.get(0).getLongitude());
-                        }
-
-                        List<Address> endAddresses = geocoder.getFromLocationName(endLocationName, 1);
-                        if (endAddresses == null || endAddresses.isEmpty()) {
-                            runOnUiThread(() -> Toast.makeText(this, "도착지 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show());
-                            return;
-                        }
-                        LatLng endPoint = new LatLng(endAddresses.get(0).getLatitude(), endAddresses.get(0).getLongitude());
-
-                        requestTmapPedestrianRoute(startPoint, endPoint);
-
-                    } catch (IOException e) {
-                        Log.e(TAG, "Geocoding failed for directions", e);
-                        runOnUiThread(() -> Toast.makeText(this, "주소 변환 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
-                    }
-                }).start();
-
-                alertDialog.dismiss();
-            });
-        });
+        btnNav.setOnClickListener(v -> showDirectionsDialog());
         btnSearch.setOnClickListener(v -> {
             searchBar.setVisibility(View.GONE);
             mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             Toast.makeText(this, "지도 집중 모드", Toast.LENGTH_SHORT).show();
         });
-        btnFav.setOnClickListener(v -> startActivity(new Intent(this, FavoritesActivity.class)));
+        btnFav.setOnClickListener(v -> {
+            Intent intent = new Intent(this, FavoritesActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_FAVORITES);
+        });
+        btnBus.setOnClickListener(v -> Toast.makeText(this, "커뮤니티", Toast.LENGTH_SHORT).show());
         btnMyPage.setOnClickListener(v -> startActivity(new Intent(this, MyPageActivity.class)));
         btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnLogout.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
-            finish(); // MainActivity 종료
+            finish();
         });
 
 
@@ -309,6 +255,113 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         busArrivalSheetBehavior.setPeekHeight(halfScreenHeight);
         placeInfoSheetBehavior.setPeekHeight(halfScreenHeight);
     }
+
+    private void showDirectionsDialog() {
+        final View dialogView = getLayoutInflater().inflate(R.layout.dialog_directions, null);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView);
+        final AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+        EditText etStart = dialogView.findViewById(R.id.et_start_location);
+        EditText etEnd = dialogView.findViewById(R.id.et_end_location);
+        Button btnSearchStart = dialogView.findViewById(R.id.btn_search_start);
+        Button btnSearchEnd = dialogView.findViewById(R.id.btn_search_end);
+        Button btnFindRoute = dialogView.findViewById(R.id.btn_find_route);
+        RadioGroup rgTransportMode = dialogView.findViewById(R.id.rg_transport_mode);
+
+        btnSearchStart.setOnClickListener(v -> showSearchResultsDialog(etStart.getText().toString(), etStart));
+        btnSearchEnd.setOnClickListener(v -> showSearchResultsDialog(etEnd.getText().toString(), etEnd));
+
+        btnFindRoute.setOnClickListener(view -> {
+            String startLocationName = etStart.getText().toString();
+            String endLocationName = etEnd.getText().toString();
+
+            if (startLocationName.isEmpty() || endLocationName.isEmpty()) {
+                Toast.makeText(this, "출발지와 목적지를 모두 입력해주세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int selectedId = rgTransportMode.getCheckedRadioButtonId();
+            if (selectedId != R.id.rb_walk) {
+                Toast.makeText(this, "현재는 도보 길찾기만 지원합니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            new Thread(() -> {
+                try {
+                    LatLng startPoint;
+                    if (startLocationName.equals("현재 위치") && locationOverlay.getPosition() != null) {
+                        startPoint = locationOverlay.getPosition();
+                    } else {
+                        List<Address> startAddresses = geocoder.getFromLocationName(startLocationName, 1);
+                        if (startAddresses == null || startAddresses.isEmpty()) {
+                            runOnUiThread(() -> Toast.makeText(this, "출발지 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show());
+                            return;
+                        }
+                        startPoint = new LatLng(startAddresses.get(0).getLatitude(), startAddresses.get(0).getLongitude());
+                    }
+
+                    List<Address> endAddresses = geocoder.getFromLocationName(endLocationName, 1);
+                    if (endAddresses == null || endAddresses.isEmpty()) {
+                        runOnUiThread(() -> Toast.makeText(this, "도착지 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show());
+                        return;
+                    }
+                    LatLng endPoint = new LatLng(endAddresses.get(0).getLatitude(), endAddresses.get(0).getLongitude());
+
+                    requestTmapPedestrianRoute(startPoint, endPoint);
+
+                } catch (IOException e) {
+                    Log.e(TAG, "Geocoding failed for directions", e);
+                    runOnUiThread(() -> Toast.makeText(this, "주소 변환 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+                } catch (Exception e) {
+                    Log.e(TAG, "Unexpected error during route finding", e);
+                    runOnUiThread(() -> Toast.makeText(this, "경로 탐색 중 알 수 없는 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+                }
+            }).start();
+
+            alertDialog.dismiss();
+        });
+    }
+
+    private void showSearchResultsDialog(String query, final EditText targetEditText) {
+        if (query.isEmpty()) {
+            Toast.makeText(this, "검색어를 입력해주세요.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                // 전국 단위로 검색하도록 반경 제한 파라미터 제거
+                List<Address> addresses = geocoder.getFromLocationName(query, 5);
+
+                runOnUiThread(() -> {
+                    if (addresses == null || addresses.isEmpty()) {
+                        Toast.makeText(this, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    final View dialogView = getLayoutInflater().inflate(R.layout.dialog_search_results, null);
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setView(dialogView);
+                    final AlertDialog searchDialog = builder.create();
+                    searchDialog.show();
+
+                    RecyclerView rv = dialogView.findViewById(R.id.rv_search_results);
+                    SearchResultsAdapter adapter = new SearchResultsAdapter(addresses, address -> {
+                        targetEditText.setText(address.getAddressLine(0));
+                        searchDialog.dismiss();
+                    });
+                    rv.setAdapter(adapter);
+                    rv.setLayoutManager(new LinearLayoutManager(this));
+                });
+            } catch (IOException e) {
+                Log.e(TAG, "Geocoding search failed", e);
+                runOnUiThread(() -> Toast.makeText(this, "검색 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
 
     @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
@@ -354,12 +407,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapDoubleTapListener((point, coord) -> {
-            // 경로선이 그려져 있으면 경로 취소
             if (currentRouteOverlay != null && currentRouteOverlay.getMap() != null) {
                 currentRouteOverlay.setMap(null);
                 Toast.makeText(this, "경로 안내가 취소되었습니다.", Toast.LENGTH_SHORT).show();
             }
-            // 지도 집중 모드 해제
             else if (searchBar.getVisibility() == View.GONE) {
                 searchBar.setVisibility(View.VISIBLE);
                 mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -543,7 +594,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 Log.e(TAG, "JSON parsing error", e);
                             }
                         }
-                        naverMap.moveCamera(CameraUpdate.zoomTo(14.0));
+                        naverMap.moveCamera(CameraUpdate.zoomTo(20.0));
                     });
                 } else {
                     Log.e(TAG, "Naver Search API Error: " + response.toString());
@@ -624,14 +675,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             currentRouteOverlay = new PolylineOverlay();
                             currentRouteOverlay.setCoords(pathPoints);
                             currentRouteOverlay.setWidth(10);
-                            currentRouteOverlay.setColor(0xFF0000FF); // Blue
+                            currentRouteOverlay.setColor(0xFF0000FF); // Blue color
                             currentRouteOverlay.setMap(naverMap);
                         }
                     });
+                } else {
+                    runOnUiThread(() -> Toast.makeText(this, "TMAP 경로 탐색 실패: " + responseCode, Toast.LENGTH_SHORT).show());
                 }
 
             } catch (Exception e) {
                 Log.e(TAG, "TMAP API Error", e);
+                runOnUiThread(() -> Toast.makeText(this, "TMAP 경로 탐색 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
             }
         }).start();
     }
@@ -933,6 +987,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 startLocationUpdates();
             } else {
                 Toast.makeText(this, "Location permission denied.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_FAVORITES && resultCode == RESULT_OK && data != null) {
+            String placeName = data.getStringExtra("placeName");
+            if (placeName != null) {
+                performGeocoding(placeName);
             }
         }
     }

@@ -13,20 +13,48 @@
         android:textStyle="bold"
         android:layout_marginBottom="16dp"/>
 
-    <EditText
-        android:id="@+id/et_start_location"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="출발지"
-        android:text="서원대학교"
-        android:layout_marginBottom="8dp"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <EditText
+            android:id="@+id/et_start_location"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="출발지"
+            android:text="서원대학교"
+            android:maxLines="1"/>
+        <Button
+            android:id="@+id/btn_search_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="60dp"
+            android:text="검색"/>
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/et_end_location"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="도착지"
-        android:layout_marginBottom="16dp"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+        <EditText
+            android:id="@+id/et_end_location"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="도착지"
+            android:maxLines="1"/>
+        <Button
+            android:id="@+id/btn_search_end"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="60dp"
+            android:text="검색"/>
+    </LinearLayout>
+
 
     <RadioGroup
         android:id="@+id/rg_transport_mode"
