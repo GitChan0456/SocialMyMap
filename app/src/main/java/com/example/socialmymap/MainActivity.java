@@ -283,10 +283,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             int selectedId = rgTransportMode.getCheckedRadioButtonId();
-            if (selectedId != R.id.rb_walk) {
-                Toast.makeText(this, "현재는 도보 길찾기만 지원합니다.", Toast.LENGTH_SHORT).show();
-                return;
-            }
 
             new Thread(() -> {
                 try {
@@ -309,7 +305,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                     LatLng endPoint = new LatLng(endAddresses.get(0).getLatitude(), endAddresses.get(0).getLongitude());
 
-                    requestTmapPedestrianRoute(startPoint, endPoint);
+                    if (selectedId == R.id.rb_walk) {
+                        requestTmapPedestrianRoute(startPoint, endPoint);
+                    } else if (selectedId == R.id.rb_car) {
+                        requestTmapCarRoute(startPoint, endPoint);
+                    }
 
                 } catch (IOException e) {
                     Log.e(TAG, "Geocoding failed for directions", e);
@@ -332,7 +332,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         new Thread(() -> {
             try {
-                // 전국 단위로 검색하도록 반경 제한 파라미터 제거
                 List<Address> addresses = geocoder.getFromLocationName(query, 5);
 
                 runOnUiThread(() -> {
@@ -677,6 +676,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             currentRouteOverlay.setWidth(10);
                             currentRouteOverlay.setColor(0xFF0000FF); // Blue color
                             currentRouteOverlay.setMap(naverMap);
+                            naverMap.moveCamera(CameraUpdate.scrollTo(start));
                         }
                     });
                 } else {
@@ -689,6 +689,90 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }).start();
     }
+
+    private void requestTmapCarRoute(LatLng start, LatLng end) {
+        new Thread(() -> {
+            try {
+                String url = "https://apis.openapi.sk.com/tmap/routes?version=1&format=json&callback=result";
+                HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json");
+                con.setRequestProperty("appKey", TMAP_APP_KEY);
+                con.setDoOutput(true);
+
+                JSONObject payload = new JSONObject();
+                payload.put("startX", String.valueOf(start.longitude));
+                payload.put("startY", String.valueOf(start.latitude));
+                payload.put("endX", String.valueOf(end.longitude));
+                payload.put("endY", String.valueOf(end.latitude));
+                payload.put("reqCoordType", "WGS84GEO");
+                payload.put("resCoordType", "WGS84GEO");
+                payload.put("startName", "출발지");
+                payload.put("endName", "도착지");
+
+                OutputStream os = con.getOutputStream();
+                os.write(payload.toString().getBytes("UTF-8"));
+                os.close();
+
+                int responseCode = con.getResponseCode();
+                BufferedReader br;
+                if (responseCode == 200) {
+                    br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                } else {
+                    br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+                }
+
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+                while ((inputLine = br.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                br.close();
+
+                Log.d(TAG, "TMAP Car Route Response: " + response.toString());
+
+                if (responseCode == 200) {
+                    List<LatLng> pathPoints = new ArrayList<>();
+                    JSONObject jsonObject = new JSONObject(response.toString());
+                    JSONArray features = jsonObject.getJSONArray("features");
+                    for (int i = 0; i < features.length(); i++) {
+                        JSONObject feature = features.getJSONObject(i);
+                        JSONObject geometry = feature.getJSONObject("geometry");
+                        String type = geometry.getString("type");
+                        JSONArray coordinates = geometry.getJSONArray("coordinates");
+
+                        if (type.equals("LineString")) {
+                            for (int j = 0; j < coordinates.length(); j++) {
+                                JSONArray coord = coordinates.getJSONArray(j);
+                                pathPoints.add(new LatLng(coord.getDouble(1), coord.getDouble(0)));
+                            }
+                        }
+                    }
+
+                    runOnUiThread(() -> {
+                        if (currentRouteOverlay != null) {
+                            currentRouteOverlay.setMap(null);
+                        }
+                        if (!pathPoints.isEmpty()) {
+                            currentRouteOverlay = new PolylineOverlay();
+                            currentRouteOverlay.setCoords(pathPoints);
+                            currentRouteOverlay.setWidth(10);
+                            currentRouteOverlay.setColor(0xFF0000FF);
+                            currentRouteOverlay.setMap(naverMap);
+                            naverMap.moveCamera(CameraUpdate.scrollTo(start));
+                        }
+                    });
+                } else {
+                    runOnUiThread(() -> Toast.makeText(this, "TMAP 자동차 경로 탐색 실패: " + responseCode, Toast.LENGTH_SHORT).show());
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "TMAP Car API Error", e);
+                runOnUiThread(() -> Toast.makeText(this, "TMAP 자동차 경로 탐색 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
 
 
     private void clearPlaceMarkers() {

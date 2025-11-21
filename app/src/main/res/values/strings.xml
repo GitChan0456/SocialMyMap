@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SocialMyMap</string>
+    <string-array name="tmap_route_options">
+        <item>최적경로</item>
+        <item>빠른길</item>
+        <item>무료도로</item>
+    </string-array>
 </resources>
