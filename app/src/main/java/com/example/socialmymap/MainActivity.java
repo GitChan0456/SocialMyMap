@@ -111,6 +111,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button btnGeocode, btnCategoryConvenience, btnCategoryCafe, btnCategorySeowon, btnCategoryBank;
     private Geocoder geocoder;
 
+    private String startLocationFromSheet = null; // 출발지 임시 저장 변수
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -269,6 +271,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Button btnSearchEnd = dialogView.findViewById(R.id.btn_search_end);
         Button btnFindRoute = dialogView.findViewById(R.id.btn_find_route);
         RadioGroup rgTransportMode = dialogView.findViewById(R.id.rg_transport_mode);
+
+        // "출발" 버튼으로 저장된 장소가 있으면 출발지에 설정
+        if (startLocationFromSheet != null) {
+            etStart.setText(startLocationFromSheet);
+            startLocationFromSheet = null; // 사용 후 초기화
+        }
 
         btnSearchStart.setOnClickListener(v -> showSearchResultsDialog(etStart.getText().toString(), etStart));
         btnSearchEnd.setOnClickListener(v -> showSearchResultsDialog(etEnd.getText().toString(), etEnd));
@@ -494,6 +502,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         tvPlaceAddress.setText(address);
         tvPlaceCategory.setText(category);
 
+        btnStart.setOnClickListener(v -> {
+            startLocationFromSheet = name;
+            Toast.makeText(this, name + " 출발지로 설정되었습니다.", Toast.LENGTH_SHORT).show();
+            placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        });
+
         btnArrive.setOnClickListener(v -> {
             if (locationOverlay.getPosition() != null) {
                 requestTmapPedestrianRoute(locationOverlay.getPosition(), destination);
@@ -593,6 +607,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 Log.e(TAG, "JSON parsing error", e);
                             }
                         }
+                        naverMap.moveCamera(CameraUpdate.zoomTo(17.0));
                     });
                 } else {
                     Log.e(TAG, "Naver Search API Error: " + response.toString());
@@ -829,7 +844,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         new Thread(() -> {
             List<BusStop> busStops = new ArrayList<>();
             try {
-                StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusSttnInfoInqireService/getCrdntPrxmtSttnList");
+                StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusSttnInfoInqireSvc/getCrdntPrxmtSttnList");
                 urlBuilder.append("?serviceKey=").append(serviceKey);
                 urlBuilder.append("&pageNo=").append("1");
                 urlBuilder.append("&numOfRows=").append("20");
