@@ -28,8 +28,8 @@
         <Button
             android:id="@+id/btn_search_start"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:minWidth="60dp"
+            android:layout_height="wrap_content"
             android:text="검색"/>
     </LinearLayout>
 
@@ -49,18 +49,17 @@
         <Button
             android:id="@+id/btn_search_end"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:minWidth="60dp"
+            android:layout_height="wrap_content"
             android:text="검색"/>
     </LinearLayout>
-
 
     <RadioGroup
         android:id="@+id/rg_transport_mode"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="8dp">
 
         <RadioButton
             android:id="@+id/rb_walk"
@@ -77,6 +76,35 @@
             android:layout_weight="1"
             android:text="자동차"/>
     </RadioGroup>
+
+    <!-- 자동차 경로 옵션 (평소에는 숨김) -->
+    <LinearLayout
+        android:id="@+id/car_options_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <CheckBox
+            android:id="@+id/cb_option_trafast"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="최소시간"/>
+        <CheckBox
+            android:id="@+id/cb_option_traoptimal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="최적경로"/>
+        <CheckBox
+            android:id="@+id/cb_option_traavoid"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="무료도로"/>
+    </LinearLayout>
 
     <Button
         android:id="@+id/btn_find_route"

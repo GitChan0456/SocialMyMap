@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
@@ -111,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button btnGeocode, btnCategoryConvenience, btnCategoryCafe, btnCategorySeowon, btnCategoryBank;
     private Geocoder geocoder;
 
-    private String startLocationFromSheet = null; // 출발지 임시 저장 변수
+    private String startLocationFromSheet = null;
 
 
     @Override
@@ -272,10 +273,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Button btnFindRoute = dialogView.findViewById(R.id.btn_find_route);
         RadioGroup rgTransportMode = dialogView.findViewById(R.id.rg_transport_mode);
 
-        // "출발" 버튼으로 저장된 장소가 있으면 출발지에 설정
+        LinearLayout carOptionsLayout = dialogView.findViewById(R.id.car_options_layout);
+        CheckBox cbTrafast = dialogView.findViewById(R.id.cb_option_trafast);
+        CheckBox cbTraoptimal = dialogView.findViewById(R.id.cb_option_traoptimal);
+        CheckBox cbTraavoid = dialogView.findViewById(R.id.cb_option_traavoid);
+
+        rgTransportMode.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rb_car) {
+                carOptionsLayout.setVisibility(View.VISIBLE);
+            } else {
+                carOptionsLayout.setVisibility(View.GONE);
+            }
+        });
+
         if (startLocationFromSheet != null) {
             etStart.setText(startLocationFromSheet);
-            startLocationFromSheet = null; // 사용 후 초기화
+            startLocationFromSheet = null;
         }
 
         btnSearchStart.setOnClickListener(v -> showSearchResultsDialog(etStart.getText().toString(), etStart));
@@ -316,7 +329,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (selectedId == R.id.rb_walk) {
                         requestTmapPedestrianRoute(startPoint, endPoint);
                     } else if (selectedId == R.id.rb_car) {
-                        requestTmapCarRoute(startPoint, endPoint);
+                        List<String> options = new ArrayList<>();
+                        if (cbTrafast.isChecked()) options.add("0"); // 최소시간
+                        if (cbTraoptimal.isChecked()) options.add("4"); // 최적
+                        if (cbTraavoid.isChecked()) options.add("10"); // 무료도로
+                        String searchOption = String.join(",", options);
+                        requestTmapCarRoute(startPoint, endPoint, searchOption);
                     }
 
                 } catch (IOException e) {
@@ -704,7 +722,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }).start();
     }
 
-    private void requestTmapCarRoute(LatLng start, LatLng end) {
+    private void requestTmapCarRoute(LatLng start, LatLng end, String searchOption) {
         new Thread(() -> {
             try {
                 String url = "https://apis.openapi.sk.com/tmap/routes?version=1&format=json&callback=result";
@@ -723,6 +741,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 payload.put("resCoordType", "WGS84GEO");
                 payload.put("startName", "출발지");
                 payload.put("endName", "도착지");
+                if (searchOption != null && !searchOption.isEmpty()) {
+                    payload.put("searchOption", searchOption);
+                }
 
                 OutputStream os = con.getOutputStream();
                 os.write(payload.toString().getBytes("UTF-8"));
