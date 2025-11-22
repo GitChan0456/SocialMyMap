@@ -593,7 +593,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 Log.e(TAG, "JSON parsing error", e);
                             }
                         }
-                        naverMap.moveCamera(CameraUpdate.zoomTo(20.0));
                     });
                 } else {
                     Log.e(TAG, "Naver Search API Error: " + response.toString());
