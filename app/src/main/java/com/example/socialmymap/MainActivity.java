@@ -12,6 +12,8 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.os.Looper;
@@ -280,6 +282,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         int halfScreenHeight = displayMetrics.heightPixels / 2;
         busArrivalSheetBehavior.setPeekHeight(halfScreenHeight);
         placeInfoSheetBehavior.setPeekHeight(halfScreenHeight);
+
+        // SQLite DB 및 테이블 생성 확인용 테스트 코드
+        try {
+            UserDBHelper dbHelper = new UserDBHelper(this);
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            Log.d(TAG, "Database and table created successfully.");
+
+            // 임시 데이터 삽입 (오류 방지를 위해 UNIQUE 충돌 무시)
+            ContentValues values = new ContentValues();
+            values.put(UserDBHelper.COLUMN_EMAIL, "test@test.com");
+            values.put(UserDBHelper.COLUMN_PASSWORD, "1234");
+            values.put(UserDBHelper.COLUMN_NICKNAME, "테스트유저");
+            db.insertWithOnConflict(UserDBHelper.TABLE_USERS, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+
+            // 데이터 개수 확인
+            android.database.Cursor cursor = db.rawQuery("SELECT * FROM " + UserDBHelper.TABLE_USERS, null);
+            Log.d(TAG, "Number of users in DB: " + cursor.getCount());
+            cursor.close();
+            db.close();
+        } catch (Exception e) {
+            Log.e(TAG, "DB Test Error: ", e);
+        }
     }
 
     private void showDirectionsDialog() {
@@ -959,7 +983,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         new Thread(() -> {
             List<BusStop> busStops = new ArrayList<>();
             try {
-                StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusSttnInfoInqireSvc/getCrdntPrxmtSttnList");
+                StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusSttnInfoInqireService/getCrdntPrxmtSttnList");
                 urlBuilder.append("?serviceKey=").append(serviceKey);
                 urlBuilder.append("&pageNo=").append("1");
                 urlBuilder.append("&numOfRows=").append("20");
