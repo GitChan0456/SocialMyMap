@@ -705,17 +705,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     List<LatLng> pathPoints = new ArrayList<>();
                     JSONObject jsonObject = new JSONObject(response.toString());
                     JSONArray features = jsonObject.getJSONArray("features");
+
                     int totalTime = 0;
                     double totalDistance = 0.0;
 
-                    for (int i = 0; i < features.length(); i++) {
-                        JSONObject feature = features.getJSONObject(i);
-                        JSONObject properties = feature.optJSONObject("properties");
-                        if (properties != null) {
+                    // 경로 요약 정보는 첫 번째 feature에서 가져옴
+                    if (features.length() > 0) {
+                        JSONObject firstFeature = features.getJSONObject(0);
+                        if (firstFeature.has("properties")) {
+                            JSONObject properties = firstFeature.getJSONObject("properties");
                             totalTime = properties.optInt("totalTime", 0);
                             totalDistance = properties.optDouble("totalDistance", 0.0);
                         }
+                    }
 
+                    for (int i = 0; i < features.length(); i++) {
+                        JSONObject feature = features.getJSONObject(i);
                         JSONObject geometry = feature.getJSONObject("geometry");
                         String type = geometry.getString("type");
                         JSONArray coordinates = geometry.getJSONArray("coordinates");
@@ -805,17 +810,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     List<LatLng> pathPoints = new ArrayList<>();
                     JSONObject jsonObject = new JSONObject(response.toString());
                     JSONArray features = jsonObject.getJSONArray("features");
+
                     int totalTime = 0;
                     double totalDistance = 0.0;
 
-                    for (int i = 0; i < features.length(); i++) {
-                        JSONObject feature = features.getJSONObject(i);
-                        JSONObject properties = feature.optJSONObject("properties");
-                        if (properties != null) {
+                    // 경로 요약 정보는 첫 번째 feature에서 가져옴
+                    if (features.length() > 0) {
+                        JSONObject firstFeature = features.getJSONObject(0);
+                        if (firstFeature.has("properties")) {
+                            JSONObject properties = firstFeature.getJSONObject("properties");
                             totalTime = properties.optInt("totalTime", 0);
                             totalDistance = properties.optDouble("totalDistance", 0.0);
                         }
+                    }
 
+                    for (int i = 0; i < features.length(); i++) {
+                        JSONObject feature = features.getJSONObject(i);
                         JSONObject geometry = feature.getJSONObject("geometry");
                         String type = geometry.getString("type");
                         JSONArray coordinates = geometry.getJSONArray("coordinates");
