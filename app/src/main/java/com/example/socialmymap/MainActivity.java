@@ -454,10 +454,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapDoubleTapListener((point, coord) -> {
-            if (currentRouteOverlay != null && currentRouteOverlay.getMap() != null) {
-                clearRouteAndPanel(); // 경로 및 패널 숨기기
-            }
-            else if (searchBar.getVisibility() == View.GONE) {
+            if (searchBar.getVisibility() == View.GONE) {
                 searchBar.setVisibility(View.VISIBLE);
                 mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }

@@ -6,13 +6,13 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:layout_gravity="bottom|center_horizontal"
-    android:layout_marginBottom="16dp"
+    android:layout_marginBottom="50dp"
     android:layout_marginStart="16dp"
     android:layout_marginEnd="16dp"
     android:background="@drawable/route_info_panel_background"
     android:padding="12dp"
     android:gravity="center_vertical"
-    android:elevation="8dp"
+    android:elevation="0dp"
     android:visibility="gone"> <!-- 초기에는 숨김 -->
 
     <ImageView
