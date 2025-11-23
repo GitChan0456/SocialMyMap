@@ -450,7 +450,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 geocodedMarker.setMap(null);
             }
             clearPlaceMarkers();
-            routeInfoPanel.setVisibility(View.GONE); // 경로 정보 패널 숨기기
+            // routeInfoPanel.setVisibility(View.GONE); // 이 부분 제거
         });
 
         naverMap.setOnMapDoubleTapListener((point, coord) -> {
