@@ -19,6 +19,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -243,6 +244,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnSearch.setOnClickListener(v -> {
             searchBar.setVisibility(View.GONE);
             mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+            // 경로 정보 패널의 마진을 동적으로 변경
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) routeInfoPanel.getLayoutParams();
+            params.topMargin = (int) (16 * getResources().getDisplayMetrics().density); // 16dp
+            routeInfoPanel.setLayoutParams(params);
+
             Toast.makeText(this, "지도 집중 모드", Toast.LENGTH_SHORT).show();
         });
         btnFav.setOnClickListener(v -> {
@@ -454,9 +461,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapDoubleTapListener((point, coord) -> {
+            // 지도 집중 모드일 때만 해제 기능 수행
             if (searchBar.getVisibility() == View.GONE) {
                 searchBar.setVisibility(View.VISIBLE);
                 mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+                // 경로 정보 패널의 마진을 원래대로 복원
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) routeInfoPanel.getLayoutParams();
+                params.topMargin = (int) (130 * getResources().getDisplayMetrics().density); // 130dp
+                routeInfoPanel.setLayoutParams(params);
             }
             return true;
         });
