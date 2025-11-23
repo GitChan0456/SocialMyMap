@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -113,6 +114,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Geocoder geocoder;
 
     private String startLocationFromSheet = null;
+
+    // Route Info Panel Components
+    private LinearLayout routeInfoPanel;
+    private ImageView ivTransportIcon;
+    private TextView tvTotalTime;
+    private TextView tvTotalDistance;
+    private ImageView btnCancelRoute;
 
 
     @Override
@@ -251,6 +259,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             finish();
         });
 
+        // Route Info Panel
+        routeInfoPanel = findViewById(R.id.route_info_panel);
+        ivTransportIcon = routeInfoPanel.findViewById(R.id.iv_transport_icon);
+        tvTotalTime = routeInfoPanel.findViewById(R.id.tv_total_time);
+        tvTotalDistance = routeInfoPanel.findViewById(R.id.tv_total_distance);
+        btnCancelRoute = routeInfoPanel.findViewById(R.id.btn_cancel_route);
+        btnCancelRoute.setOnClickListener(v -> clearRouteAndPanel());
+
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -281,8 +297,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         rgTransportMode.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rb_car) {
                 carOptionsLayout.setVisibility(View.VISIBLE);
+                cbTraoptimal.setChecked(true); // 최적경로 기본 체크
             } else {
                 carOptionsLayout.setVisibility(View.GONE);
+                // 다른 모드 선택 시 체크박스 초기화 (선택 사항)
+                cbTrafast.setChecked(false);
+                cbTraoptimal.setChecked(false);
+                cbTraavoid.setChecked(false);
             }
         });
 
@@ -330,9 +351,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         requestTmapPedestrianRoute(startPoint, endPoint);
                     } else if (selectedId == R.id.rb_car) {
                         List<String> options = new ArrayList<>();
-                        if (cbTrafast.isChecked()) options.add("0"); // 최소시간
-                        if (cbTraoptimal.isChecked()) options.add("4"); // 최적
-                        if (cbTraavoid.isChecked()) options.add("10"); // 무료도로
+                        if (cbTrafast.isChecked()) options.add("0");
+                        if (cbTraoptimal.isChecked()) options.add("4");
+                        if (cbTraavoid.isChecked()) options.add("10");
                         String searchOption = String.join(",", options);
                         requestTmapCarRoute(startPoint, endPoint, searchOption);
                     }
@@ -429,12 +450,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 geocodedMarker.setMap(null);
             }
             clearPlaceMarkers();
+            routeInfoPanel.setVisibility(View.GONE); // 경로 정보 패널 숨기기
         });
 
         naverMap.setOnMapDoubleTapListener((point, coord) -> {
             if (currentRouteOverlay != null && currentRouteOverlay.getMap() != null) {
-                currentRouteOverlay.setMap(null);
-                Toast.makeText(this, "경로 안내가 취소되었습니다.", Toast.LENGTH_SHORT).show();
+                clearRouteAndPanel(); // 경로 및 패널 숨기기
             }
             else if (searchBar.getVisibility() == View.GONE) {
                 searchBar.setVisibility(View.VISIBLE);
@@ -508,7 +529,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Geocoding failed", e);
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "지오코딩 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> Toast.makeText(this, "지오코딩 오류가 발생했습니다.", Toast.LENGTH_SHORT).show());
             }
         }).start();
     }
@@ -625,7 +646,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 Log.e(TAG, "JSON parsing error", e);
                             }
                         }
-                        naverMap.moveCamera(CameraUpdate.zoomTo(17.0));
+                        // 줌 레벨 변경 없이 현재 상태 유지
                     });
                 } else {
                     Log.e(TAG, "Naver Search API Error: " + response.toString());
@@ -684,8 +705,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     List<LatLng> pathPoints = new ArrayList<>();
                     JSONObject jsonObject = new JSONObject(response.toString());
                     JSONArray features = jsonObject.getJSONArray("features");
+                    int totalTime = 0;
+                    double totalDistance = 0.0;
+
                     for (int i = 0; i < features.length(); i++) {
                         JSONObject feature = features.getJSONObject(i);
+                        JSONObject properties = feature.optJSONObject("properties");
+                        if (properties != null) {
+                            totalTime = properties.optInt("totalTime", 0);
+                            totalDistance = properties.optDouble("totalDistance", 0.0);
+                        }
+
                         JSONObject geometry = feature.getJSONObject("geometry");
                         String type = geometry.getString("type");
                         JSONArray coordinates = geometry.getJSONArray("coordinates");
@@ -698,6 +728,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                     }
 
+                    int finalTotalTime = totalTime;
+                    double finalTotalDistance = totalDistance;
                     runOnUiThread(() -> {
                         if (currentRouteOverlay != null) {
                             currentRouteOverlay.setMap(null);
@@ -709,6 +741,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             currentRouteOverlay.setColor(0xFF0000FF); // Blue color
                             currentRouteOverlay.setMap(naverMap);
                             naverMap.moveCamera(CameraUpdate.scrollTo(start));
+
+                            // 경로 정보 패널 업데이트 및 표시
+                            updateRouteInfoPanel(finalTotalTime, finalTotalDistance, R.drawable.ic_walk_icon);
                         }
                     });
                 } else {
@@ -770,8 +805,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     List<LatLng> pathPoints = new ArrayList<>();
                     JSONObject jsonObject = new JSONObject(response.toString());
                     JSONArray features = jsonObject.getJSONArray("features");
+                    int totalTime = 0;
+                    double totalDistance = 0.0;
+
                     for (int i = 0; i < features.length(); i++) {
                         JSONObject feature = features.getJSONObject(i);
+                        JSONObject properties = feature.optJSONObject("properties");
+                        if (properties != null) {
+                            totalTime = properties.optInt("totalTime", 0);
+                            totalDistance = properties.optDouble("totalDistance", 0.0);
+                        }
+
                         JSONObject geometry = feature.getJSONObject("geometry");
                         String type = geometry.getString("type");
                         JSONArray coordinates = geometry.getJSONArray("coordinates");
@@ -784,6 +828,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                     }
 
+                    int finalTotalTime = totalTime;
+                    double finalTotalDistance = totalDistance;
                     runOnUiThread(() -> {
                         if (currentRouteOverlay != null) {
                             currentRouteOverlay.setMap(null);
@@ -795,6 +841,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             currentRouteOverlay.setColor(0xFF0000FF);
                             currentRouteOverlay.setMap(naverMap);
                             naverMap.moveCamera(CameraUpdate.scrollTo(start));
+
+                            // 경로 정보 패널 업데이트 및 표시
+                            updateRouteInfoPanel(finalTotalTime, finalTotalDistance, R.drawable.ic_car_icon);
                         }
                     });
                 } else {
@@ -808,6 +857,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }).start();
     }
 
+    // 경로 정보 패널 업데이트 및 표시 메서드
+    private void updateRouteInfoPanel(int totalTimeSeconds, double totalDistanceMeters, int transportIconResId) {
+        // 시간 포맷 (분 단위)
+        int minutes = totalTimeSeconds / 60;
+        tvTotalTime.setText(minutes + "분");
+
+        // 거리 포맷 (KM 단위)
+        String distanceKm = String.format(Locale.getDefault(), "%.1fkm", totalDistanceMeters / 1000);
+        tvTotalDistance.setText(distanceKm);
+
+        // 아이콘 설정
+        ivTransportIcon.setImageResource(transportIconResId);
+
+        // 패널 표시
+        routeInfoPanel.setVisibility(View.VISIBLE);
+    }
+
+    // 경로 및 패널 숨기기 메서드
+    private void clearRouteAndPanel() {
+        if (currentRouteOverlay != null) {
+            currentRouteOverlay.setMap(null);
+            currentRouteOverlay = null;
+        }
+        routeInfoPanel.setVisibility(View.GONE);
+    }
 
 
     private void clearPlaceMarkers() {
