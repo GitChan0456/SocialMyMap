@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.content.ContentValues;
@@ -262,6 +263,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnMyPage.setOnClickListener(v -> startActivity(new Intent(this, MyPageActivity.class)));
         btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnLogout.setOnClickListener(v -> {
+            // SharedPreferences에서 로그인 정보 삭제
+            SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.clear();
+            editor.apply();
+
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);

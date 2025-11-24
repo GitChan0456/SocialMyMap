@@ -33,11 +33,11 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/tv_email"
+            android:id="@+id/tv_user_email"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="socialmap@email.com"
+            android:text="email@example.com"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray" />
     </LinearLayout>
