@@ -27,7 +27,7 @@ public class UserDao {
         values.put(UserDBHelper.COLUMN_USER_ID, userId);
         values.put(UserDBHelper.COLUMN_PASSWORD, password);
         values.put(UserDBHelper.COLUMN_NICKNAME, nickname);
-        values.put(UserDBHelper.COLUMN_EMAIL, email); // email 추가
+        values.put(UserDBHelper.COLUMN_EMAIL, email);
         long result = db.insertWithOnConflict(UserDBHelper.TABLE_USERS, null, values, SQLiteDatabase.CONFLICT_IGNORE);
         return result != -1;
     }
@@ -57,6 +57,12 @@ public class UserDao {
         }
         cursor.close();
         return userData;
+    }
+
+    public void deleteUser(String userId) {
+        String selection = UserDBHelper.COLUMN_USER_ID + " = ?";
+        String[] selectionArgs = {userId};
+        db.delete(UserDBHelper.TABLE_USERS, selection, selectionArgs);
     }
 }
 
