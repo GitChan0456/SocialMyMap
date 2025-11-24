@@ -64,6 +64,22 @@ public class UserDao {
         String[] selectionArgs = {userId};
         db.delete(UserDBHelper.TABLE_USERS, selection, selectionArgs);
     }
+
+    public int updateUser(String userId, String newNickname, String newEmail, String newPassword) {
+        ContentValues values = new ContentValues();
+        values.put(UserDBHelper.COLUMN_NICKNAME, newNickname);
+        values.put(UserDBHelper.COLUMN_EMAIL, newEmail);
+
+        // 새 비밀번호가 입력된 경우에만 업데이트
+        if (newPassword != null && !newPassword.isEmpty()) {
+            values.put(UserDBHelper.COLUMN_PASSWORD, newPassword);
+        }
+
+        String selection = UserDBHelper.COLUMN_USER_ID + " = ?";
+        String[] selectionArgs = {userId};
+
+        return db.update(UserDBHelper.TABLE_USERS, values, selection, selectionArgs);
+    }
 }
 
 // 사용자 정보를 담을 간단한 데이터 클래스

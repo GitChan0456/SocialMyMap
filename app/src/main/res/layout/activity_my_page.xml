@@ -101,6 +101,7 @@
 
     <!-- Menu Section -->
     <TextView
+        android:id="@+id/tv_profile_edit"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="프로필 수정"

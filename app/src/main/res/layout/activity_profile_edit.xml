@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="32dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="프로필 수정"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="닉네임"
+        android:textSize="16sp"/>
+    <EditText
+        android:id="@+id/et_edit_nickname"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="이메일 (선택)"
+        android:textSize="16sp"/>
+    <EditText
+        android:id="@+id/et_edit_email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textEmailAddress"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="새 비밀번호 (변경 시에만 입력)"
+        android:textSize="16sp"/>
+    <EditText
+        android:id="@+id/et_edit_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="새 비밀번호"
+        android:inputType="textPassword"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/et_edit_password_confirm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="새 비밀번호 확인"
+        android:inputType="textPassword"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btn_edit_submit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="수정 완료"/>
+
+</LinearLayout>

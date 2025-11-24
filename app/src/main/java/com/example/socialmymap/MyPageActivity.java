@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MyPageActivity extends AppCompatActivity {
 
     private UserDao userDao;
+    private TextView tvNickname, tvUserEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,26 +32,19 @@ public class MyPageActivity extends AppCompatActivity {
         userDao = new UserDao(this);
         userDao.open();
 
-        TextView tvNickname = findViewById(R.id.tv_nickname);
-        TextView tvUserEmail = findViewById(R.id.tv_user_email);
+        tvNickname = findViewById(R.id.tv_nickname);
+        tvUserEmail = findViewById(R.id.tv_user_email);
         TextView tvLogout = findViewById(R.id.tv_logout);
         TextView tvDeleteAccount = findViewById(R.id.tv_delete_account);
+        TextView tvProfileEdit = findViewById(R.id.tv_profile_edit);
 
-        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        String nickname = prefs.getString("user_nickname", "사용자");
-        String email = prefs.getString("user_email", null);
-        String userId = prefs.getString("user_id", null);
+        tvProfileEdit.setOnClickListener(v -> {
+            Intent intent = new Intent(MyPageActivity.this, ProfileEditActivity.class);
+            startActivity(intent);
+        });
 
-        tvNickname.setText(nickname);
-
-        if (email == null || email.isEmpty()) {
-            tvUserEmail.setText("이메일 정보 없음");
-        } else {
-            tvUserEmail.setText(email);
-        }
-
-        // 로그아웃 버튼 리스너
         tvLogout.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.clear();
             editor.apply();
@@ -61,12 +56,13 @@ public class MyPageActivity extends AppCompatActivity {
             Toast.makeText(this, "로그아웃되었습니다.", Toast.LENGTH_SHORT).show();
         });
 
-        // 회원탈퇴 버튼 리스너
         tvDeleteAccount.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
                     .setTitle("회원 탈퇴")
                     .setMessage("모든 정보가 영구적으로 삭제됩니다. 정말 탈퇴하시겠습니까?")
                     .setPositiveButton("예", (dialog, which) -> {
+                        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+                        String userId = prefs.getString("user_id", null);
                         if (userId != null) {
                             userDao.deleteUser(userId);
 
@@ -84,6 +80,27 @@ public class MyPageActivity extends AppCompatActivity {
                     .setNegativeButton("아니오", null)
                     .show();
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 화면이 다시 나타날 때마다 사용자 정보를 새로고침
+        loadUserData();
+    }
+
+    private void loadUserData() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String nickname = prefs.getString("user_nickname", "사용자");
+        String email = prefs.getString("user_email", null);
+
+        tvNickname.setText(nickname);
+
+        if (email == null || email.isEmpty()) {
+            tvUserEmail.setText("이메일 정보를 입력해주세요.");
+        } else {
+            tvUserEmail.setText(email);
+        }
     }
 
     @Override

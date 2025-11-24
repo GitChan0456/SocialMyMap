@@ -40,6 +40,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".ProfileEditActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
