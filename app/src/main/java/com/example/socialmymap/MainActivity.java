@@ -1218,8 +1218,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_FAVORITES && resultCode == RESULT_OK && data != null) {
             String placeName = data.getStringExtra("placeName");
-            if (placeName != null) {
-                performGeocoding(placeName);
+            String address = data.getStringExtra("address"); // 주소도 함께 받아옴
+            if (address != null && !address.isEmpty()) {
+                performGeocoding(address); // 주소가 있으면 주소로 검색
+            } else if (placeName != null && !placeName.isEmpty()) {
+                performGeocoding(placeName); // 주소가 없으면 장소명으로 검색 (폴백)
             }
         }
     }
