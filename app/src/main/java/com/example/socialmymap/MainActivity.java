@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private BottomSheetBehavior<View> placeInfoSheetBehavior;
     private TextView tvPlaceName, tvPlaceCategory, tvPlaceAddress;
-    private Button btnStart, btnArrive;
+    private Button btnStart, btnArrive, btnAddFavorite;
 
     private BottomSheetBehavior<View> mainMenuSheetBehavior;
 
@@ -215,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         tvPlaceAddress = placeBottomSheet.findViewById(R.id.tv_place_address);
         btnStart = placeBottomSheet.findViewById(R.id.btn_start);
         btnArrive = placeBottomSheet.findViewById(R.id.btn_arrive);
+        btnAddFavorite = placeBottomSheet.findViewById(R.id.btn_add_favorite);
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         // Main Menu Bottom Sheet
@@ -573,6 +574,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Toast.makeText(this, "현재 위치를 알 수 없어 경로를 요청할 수 없습니다.", Toast.LENGTH_SHORT).show();
             }
             placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        });
+
+        btnAddFavorite.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            String userId = prefs.getString("user_id", null);
+            if (userId == null || userId.isEmpty()) {
+                Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            FavoritesDao favoritesDao = new FavoritesDao(this);
+            favoritesDao.open();
+            long inserted = favoritesDao.addFavorite(
+                    userId,
+                    name,
+                    address,
+                    destination != null ? destination.latitude : null,
+                    destination != null ? destination.longitude : null
+            );
+            favoritesDao.close();
+
+            if (inserted == -1) {
+                Toast.makeText(this, "이미 즐겨찾기에 있습니다.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "즐겨찾기에 추가했습니다.", Toast.LENGTH_SHORT).show();
+            }
         });
 
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -1219,7 +1245,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (requestCode == REQUEST_CODE_FAVORITES && resultCode == RESULT_OK && data != null) {
             String placeName = data.getStringExtra("placeName");
             String address = data.getStringExtra("address"); // 주소도 함께 받아옴
-            if (address != null && !address.isEmpty()) {
+            double lat = data.hasExtra("lat") ? data.getDoubleExtra("lat", Double.NaN) : Double.NaN;
+            double lng = data.hasExtra("lng") ? data.getDoubleExtra("lng", Double.NaN) : Double.NaN;
+
+            if (!Double.isNaN(lat) && !Double.isNaN(lng)) {
+                LatLng point = new LatLng(lat, lng);
+                if (geocodedMarker != null) {
+                    geocodedMarker.setMap(null);
+                }
+                geocodedMarker = new Marker();
+                geocodedMarker.setPosition(point);
+                geocodedMarker.setMap(naverMap);
+                naverMap.moveCamera(CameraUpdate.scrollTo(point));
+                showPlaceInfo(placeName != null ? placeName : "선택한 장소",
+                        address != null ? address : "",
+                        "즐겨찾기",
+                        point);
+            } else if (address != null && !address.isEmpty()) {
                 performGeocoding(address); // 주소가 있으면 주소로 검색
             } else if (placeName != null && !placeName.isEmpty()) {
                 performGeocoding(placeName); // 주소가 없으면 장소명으로 검색 (폴백)

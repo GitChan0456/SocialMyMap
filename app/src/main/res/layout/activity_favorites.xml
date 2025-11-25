@@ -8,48 +8,23 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="즐겨찾는 장소"
+        android:text="즐겨찾기"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="16dp"/>
 
-    <LinearLayout
-        android:id="@+id/ll_seowon_univ"
+    <TextView
+        android:id="@+id/tv_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:background="@android:drawable/dialog_holo_light_frame"
-        android:layout_marginBottom="16dp">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="서원대학교"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="충북 청주시 서원구 무심서로 377-3"/>
-    </LinearLayout>
+        android:text="즐겨찾기가 없습니다."
+        android:padding="12dp"
+        android:visibility="gone" />
 
-    <LinearLayout
-        android:id="@+id/ll_my_home"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_favorites"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:background="@android:drawable/dialog_holo_light_frame">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="우리집"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="충북 청주시 서원구 1순환로 123"/>
-    </LinearLayout>
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
 
 </LinearLayout>
