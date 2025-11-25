@@ -99,6 +99,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private OverlayImage busStopIcon;
     private Marker geocodedMarker;
     private PolylineOverlay currentRouteOverlay;
+    private LatLng currentRouteStart;
+    private LatLng currentRouteEnd;
+    private String currentRouteMode; // "walk" or "car"
+    private String currentCarSearchOption;
 
     // UI Components
     private LinearLayout searchBar;
@@ -562,9 +566,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         tvPlaceCategory.setText(category);
 
         btnStart.setOnClickListener(v -> {
-            startLocationFromSheet = name;
-            Toast.makeText(this, name + " 출발지로 설정되었습니다.", Toast.LENGTH_SHORT).show();
-            placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            if (currentRouteEnd != null && destination != null) {
+                // 현재 목적지를 유지하고 출발지만 변경하여 재탐색
+                LatLng newStart = destination;
+                if ("car".equals(currentRouteMode)) {
+                    requestTmapCarRoute(newStart, currentRouteEnd, currentCarSearchOption);
+                } else {
+                    requestTmapPedestrianRoute(newStart, currentRouteEnd);
+                }
+                Toast.makeText(this, "출발지를 변경해 경로를 다시 안내합니다.", Toast.LENGTH_SHORT).show();
+                placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            } else {
+                // 아직 경로가 없는 경우: 기존 동작(출발지 후보 설정)
+                startLocationFromSheet = name;
+                Toast.makeText(this, name + " 출발지로 설정되었습니다.", Toast.LENGTH_SHORT).show();
+                placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            }
         });
 
         btnArrive.setOnClickListener(v -> {
@@ -706,6 +723,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void requestTmapPedestrianRoute(LatLng start, LatLng end) {
+        currentRouteStart = start;
+        currentRouteEnd = end;
+        currentRouteMode = "walk";
+        currentCarSearchOption = null;
         new Thread(() -> {
             try {
                 String url = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result";
@@ -808,6 +829,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void requestTmapCarRoute(LatLng start, LatLng end, String searchOption) {
+        currentRouteStart = start;
+        currentRouteEnd = end;
+        currentRouteMode = "car";
+        currentCarSearchOption = searchOption;
         new Thread(() -> {
             try {
                 String url = "https://apis.openapi.sk.com/tmap/routes?version=1&format=json&callback=result";
@@ -935,6 +960,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentRouteOverlay.setMap(null);
             currentRouteOverlay = null;
         }
+        currentRouteStart = null;
+        currentRouteEnd = null;
+        currentRouteMode = null;
+        currentCarSearchOption = null;
         routeInfoPanel.setVisibility(View.GONE);
     }
 
