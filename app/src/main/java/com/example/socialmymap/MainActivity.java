@@ -18,6 +18,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -107,6 +108,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LatLng currentRouteEnd;
     private String currentRouteMode; // "walk" or "car"
     private String currentCarSearchOption;
+    private boolean isMapFocusMode = false;
+    private long lastMapTapTime = 0L;
 
     // UI Components
     private LinearLayout searchBar;
@@ -257,13 +260,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnSearch.setOnClickListener(v -> {
             searchBar.setVisibility(View.GONE);
             mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
             // 경로 정보 패널의 마진을 동적으로 변경
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) routeInfoPanel.getLayoutParams();
             params.topMargin = (int) (16 * getResources().getDisplayMetrics().density); // 16dp
             routeInfoPanel.setLayoutParams(params);
 
-            Toast.makeText(this, "지도 집중 모드", Toast.LENGTH_SHORT).show();
+            isMapFocusMode = true;
+            Toast.makeText(this, "지도 집중 모드 (지도 더블탭으로 해제)", Toast.LENGTH_SHORT).show();
         });
         btnFav.setOnClickListener(v -> {
             Intent intent = new Intent(this, FavoritesActivity.class);
@@ -471,6 +477,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapClickListener((point, coord) -> {
+            if (isMapFocusMode) {
+                long now = SystemClock.elapsedRealtime();
+                if (now - lastMapTapTime < 400) {
+                    exitMapFocusMode();
+                } else {
+                    lastMapTapTime = now;
+                    Toast.makeText(this, "한 번 더 탭하면 해제됩니다.", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
             if (busArrivalSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
                 busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                 return;
@@ -496,13 +512,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         naverMap.setOnMapDoubleTapListener((point, coord) -> {
             // 지도 집중 모드일 때만 해제 기능 수행
             if (searchBar.getVisibility() == View.GONE) {
-                searchBar.setVisibility(View.VISIBLE);
-                mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-                // 경로 정보 패널의 마진을 원래대로 복원
-                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) routeInfoPanel.getLayoutParams();
-                params.topMargin = (int) (130 * getResources().getDisplayMetrics().density); // 130dp
-                routeInfoPanel.setLayoutParams(params);
+                exitMapFocusMode();
             }
             return true;
         });
@@ -1333,6 +1343,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             marker.setMap(null);
         }
         busStopMarkers.clear();
+    }
+
+    private void exitMapFocusMode() {
+        searchBar.setVisibility(View.VISIBLE);
+        mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        busArrivalSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+        // 경로 정보 패널의 마진을 원래대로 복원
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) routeInfoPanel.getLayoutParams();
+        params.topMargin = (int) (130 * getResources().getDisplayMetrics().density); // 130dp
+        routeInfoPanel.setLayoutParams(params);
+
+        isMapFocusMode = false;
+        lastMapTapTime = 0L;
     }
 
     @Override
