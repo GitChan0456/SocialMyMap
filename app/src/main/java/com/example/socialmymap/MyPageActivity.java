@@ -37,9 +37,15 @@ public class MyPageActivity extends AppCompatActivity {
         TextView tvLogout = findViewById(R.id.tv_logout);
         TextView tvDeleteAccount = findViewById(R.id.tv_delete_account);
         TextView tvProfileEdit = findViewById(R.id.tv_profile_edit);
+        TextView tvManageFavorites = findViewById(R.id.tv_manage_favorites);
 
         tvProfileEdit.setOnClickListener(v -> {
             Intent intent = new Intent(MyPageActivity.this, ProfileEditActivity.class);
+            startActivity(intent);
+        });
+
+        tvManageFavorites.setOnClickListener(v -> {
+            Intent intent = new Intent(MyPageActivity.this, FavoritesActivity.class);
             startActivity(intent);
         });
 

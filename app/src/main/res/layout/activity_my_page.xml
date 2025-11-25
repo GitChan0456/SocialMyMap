@@ -115,6 +115,7 @@
         android:layout_height="1dp"
         android:background="#F5F5F5" />
     <TextView
+        android:id="@+id/tv_manage_favorites"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="즐겨찾는 장소"
