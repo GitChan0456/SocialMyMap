@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<Marker> longClickMarkers = new ArrayList<>();
     private OverlayImage busStopIcon;
     private Marker geocodedMarker;
+    private Marker routeDestinationMarker;
     private PolylineOverlay currentRouteOverlay;
     private LatLng currentRouteStart;
     private LatLng currentRouteEnd;
@@ -587,6 +588,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnArrive.setOnClickListener(v -> {
             if (locationOverlay.getPosition() != null) {
                 requestTmapPedestrianRoute(locationOverlay.getPosition(), destination);
+                // 롱클릭으로 생성된 임시 마커는 제거
+                if (!longClickMarkers.isEmpty()) {
+                    for (Marker m : longClickMarkers) {
+                        m.setMap(null);
+                    }
+                    longClickMarkers.clear();
+                }
             } else {
                 Toast.makeText(this, "현재 위치를 알 수 없어 경로를 요청할 수 없습니다.", Toast.LENGTH_SHORT).show();
             }
@@ -727,6 +735,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         currentRouteEnd = end;
         currentRouteMode = "walk";
         currentCarSearchOption = null;
+        setRouteDestinationMarker(end, "목적지");
         new Thread(() -> {
             try {
                 String url = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result";
@@ -833,6 +842,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         currentRouteEnd = end;
         currentRouteMode = "car";
         currentCarSearchOption = searchOption;
+        setRouteDestinationMarker(end, "목적지");
         new Thread(() -> {
             try {
                 String url = "https://apis.openapi.sk.com/tmap/routes?version=1&format=json&callback=result";
@@ -960,11 +970,42 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentRouteOverlay.setMap(null);
             currentRouteOverlay = null;
         }
+        if (routeDestinationMarker != null) {
+            routeDestinationMarker.setMap(null);
+            routeDestinationMarker = null;
+        }
         currentRouteStart = null;
         currentRouteEnd = null;
         currentRouteMode = null;
         currentCarSearchOption = null;
         routeInfoPanel.setVisibility(View.GONE);
+    }
+
+    private void setRouteDestinationMarker(LatLng end, String title) {
+        if (naverMap == null || end == null) return;
+        Runnable task = () -> {
+            if (routeDestinationMarker != null) {
+                routeDestinationMarker.setMap(null);
+            }
+            // 이전 목적지/검색 마커는 제거
+            if (geocodedMarker != null) {
+                geocodedMarker.setMap(null);
+                geocodedMarker = null;
+            }
+            clearPlaceMarkers();
+
+            routeDestinationMarker = new Marker();
+            routeDestinationMarker.setPosition(end);
+            routeDestinationMarker.setIcon(OverlayImage.fromResource(R.drawable.ic_feature_marker));
+            routeDestinationMarker.setCaptionText(title != null ? title : "도착지");
+            routeDestinationMarker.setMap(naverMap);
+        };
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            task.run();
+        } else {
+            runOnUiThread(task);
+        }
     }
 
 
