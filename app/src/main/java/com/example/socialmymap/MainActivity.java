@@ -23,12 +23,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -129,6 +132,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ImageView ivTransportIcon;
     private TextView tvTotalTime;
     private TextView tvTotalDistance;
+    private TextView tvRouteOption;
     private ImageView btnCancelRoute;
 
 
@@ -286,6 +290,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ivTransportIcon = routeInfoPanel.findViewById(R.id.iv_transport_icon);
         tvTotalTime = routeInfoPanel.findViewById(R.id.tv_total_time);
         tvTotalDistance = routeInfoPanel.findViewById(R.id.tv_total_distance);
+        tvRouteOption = routeInfoPanel.findViewById(R.id.tv_route_option);
         btnCancelRoute = routeInfoPanel.findViewById(R.id.btn_cancel_route);
         btnCancelRoute.setOnClickListener(v -> clearRouteAndPanel());
 
@@ -312,20 +317,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         RadioGroup rgTransportMode = dialogView.findViewById(R.id.rg_transport_mode);
 
         LinearLayout carOptionsLayout = dialogView.findViewById(R.id.car_options_layout);
-        CheckBox cbTrafast = dialogView.findViewById(R.id.cb_option_trafast);
-        CheckBox cbTraoptimal = dialogView.findViewById(R.id.cb_option_traoptimal);
-        CheckBox cbTraavoid = dialogView.findViewById(R.id.cb_option_traavoid);
+        Spinner spCarOptions = dialogView.findViewById(R.id.sp_car_options);
 
         rgTransportMode.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rb_car) {
                 carOptionsLayout.setVisibility(View.VISIBLE);
-                cbTraoptimal.setChecked(true); // 최적경로 기본 체크
+                if (spCarOptions.getAdapter() != null && spCarOptions.getAdapter().getCount() > 0) {
+                    spCarOptions.setSelection(1); // 기본: 최적경로 (index 1)
+                }
             } else {
                 carOptionsLayout.setVisibility(View.GONE);
-                // 다른 모드 선택 시 체크박스 초기화 (선택 사항)
-                cbTrafast.setChecked(false);
-                cbTraoptimal.setChecked(false);
-                cbTraavoid.setChecked(false);
             }
         });
 
@@ -336,6 +337,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         btnSearchStart.setOnClickListener(v -> showSearchResultsDialog(etStart.getText().toString(), etStart));
         btnSearchEnd.setOnClickListener(v -> showSearchResultsDialog(etEnd.getText().toString(), etEnd));
+
+        // 자동차 옵션 스피너 초기화
+        List<String> carOptions = new ArrayList<>();
+        carOptions.add("최소시간");
+        carOptions.add("최적경로");
+        carOptions.add("무료도로");
+        ArrayAdapter<String> carOptionsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, carOptions);
+        carOptionsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spCarOptions.setAdapter(carOptionsAdapter);
+        spCarOptions.setSelection(1); // 기본: 최적경로
 
         btnFindRoute.setOnClickListener(view -> {
             String startLocationName = etStart.getText().toString();
@@ -372,11 +383,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (selectedId == R.id.rb_walk) {
                         requestTmapPedestrianRoute(startPoint, endPoint);
                     } else if (selectedId == R.id.rb_car) {
-                        List<String> options = new ArrayList<>();
-                        if (cbTrafast.isChecked()) options.add("0");
-                        if (cbTraoptimal.isChecked()) options.add("4");
-                        if (cbTraavoid.isChecked()) options.add("10");
-                        String searchOption = String.join(",", options);
+                        String searchOption;
+                        int selectedPos = spCarOptions.getSelectedItemPosition();
+                        if (selectedPos == 0) {
+                            searchOption = "0"; // 최소시간
+                        } else if (selectedPos == 2) {
+                            searchOption = "10"; // 무료도로
+                        } else {
+                            searchOption = "4"; // 최적경로(기본)
+                        }
                         requestTmapCarRoute(startPoint, endPoint, searchOption);
                     }
 
@@ -389,6 +404,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }).start();
 
+            if (mainMenuSheetBehavior != null) {
+                mainMenuSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
             alertDialog.dismiss();
         });
     }
@@ -824,6 +842,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                             // 경로 정보 패널 업데이트 및 표시
                             updateRouteInfoPanel(finalTotalTime, finalTotalDistance, R.drawable.ic_walk_icon);
+                            LatLng destPoint = pathPoints.get(pathPoints.size() - 1);
+                            setRouteDestinationMarker(destPoint, "도착지");
                         }
                     });
                 } else {
@@ -934,6 +954,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                             // 경로 정보 패널 업데이트 및 표시
                             updateRouteInfoPanel(finalTotalTime, finalTotalDistance, R.drawable.ic_car_icon);
+                            LatLng destPoint = pathPoints.get(pathPoints.size() - 1);
+                            setRouteDestinationMarker(destPoint, "도착지");
                         }
                     });
                 } else {
@@ -959,6 +981,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // 아이콘 설정
         ivTransportIcon.setImageResource(transportIconResId);
+
+        // 경로 옵션 표시 (자동차 경로일 때만)
+        if ("car".equals(currentRouteMode)) {
+            String optionText;
+            if ("0".equals(currentCarSearchOption)) {
+                optionText = "최소시간";
+            } else if ("10".equals(currentCarSearchOption)) {
+                optionText = "무료도로";
+            } else {
+                optionText = "최적경로";
+            }
+            tvRouteOption.setVisibility(View.VISIBLE);
+            tvRouteOption.setText(optionText);
+        } else {
+            tvRouteOption.setVisibility(View.GONE);
+        }
 
         // 패널 표시
         routeInfoPanel.setVisibility(View.VISIBLE);

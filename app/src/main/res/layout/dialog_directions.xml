@@ -82,28 +82,21 @@
         android:id="@+id/car_options_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_marginBottom="16dp"
         android:visibility="gone">
 
-        <CheckBox
-            android:id="@+id/cb_option_trafast"
-            android:layout_width="0dp"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="최소시간"/>
-        <CheckBox
-            android:id="@+id/cb_option_traoptimal"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="최적경로"/>
-        <CheckBox
-            android:id="@+id/cb_option_traavoid"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="무료도로"/>
+            android:text="자동차 경로 옵션"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <Spinner
+            android:id="@+id/sp_car_options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
     <Button
