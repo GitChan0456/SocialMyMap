@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,6 +26,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private CommentAdapter adapter;
     private List<Comment> comments;
     private EditText etComment;
+    private int position = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,12 +42,14 @@ public class PostDetailActivity extends AppCompatActivity {
         TextView tvAuthor = findViewById(R.id.tv_detail_author);
         TextView tvTime = findViewById(R.id.tv_detail_time);
         TextView tvContent = findViewById(R.id.tv_detail_content);
+        TextView tvViews = findViewById(R.id.tv_detail_views);
         RecyclerView rvComments = findViewById(R.id.rv_comments);
         etComment = findViewById(R.id.et_comment);
         Button btnSubmitComment = findViewById(R.id.btn_submit_comment);
 
         Intent intent = getIntent();
         Post post = (Post) intent.getSerializableExtra("post");
+        position = intent.getIntExtra("position", -1);
 
         if (post == null) {
             Toast.makeText(this, "게시글 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
@@ -62,6 +66,7 @@ public class PostDetailActivity extends AppCompatActivity {
         tvAuthor.setText(post.author);
         tvContent.setText(post.content);
         tvTime.setText(post.timestamp);
+        tvViews.setText(String.valueOf(post.views));
 
         adapter = new CommentAdapter(comments);
         rvComments.setAdapter(adapter);
@@ -85,12 +90,27 @@ public class PostDetailActivity extends AppCompatActivity {
             etComment.setText("");
             rvComments.scrollToPosition(adapter.getItemCount() - 1);
         });
+
+        // 결과 반환 로직 설정
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                setResultAndFinish();
+            }
+        });
+    }
+
+    private void setResultAndFinish() {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("position", position);
+        setResult(RESULT_OK, resultIntent);
+        finish();
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            finish();
+            setResultAndFinish();
             return true;
         }
         return super.onOptionsItemSelected(item);

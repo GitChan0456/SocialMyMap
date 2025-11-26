@@ -1,22 +1,26 @@
 package com.example.socialmymap;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import java.io.Serializable;
 import java.util.List;
-import android.content.Context;
-import android.content.Intent;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     private List<Post> postList;
+    private Fragment fragment;
 
-    public PostAdapter(List<Post> postList) {
+    public PostAdapter(List<Post> postList, Fragment fragment) {
         this.postList = postList;
+        this.fragment = fragment;
     }
 
     @NonNull
@@ -36,10 +40,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvComments.setText(String.valueOf(post.comments.size()));
 
         holder.itemView.setOnClickListener(v -> {
-            Context context = holder.itemView.getContext();
-            Intent intent = new Intent(context, PostDetailActivity.class);
-            intent.putExtra("post", post); // Post 객체 전체를 전달
-            context.startActivity(intent);
+            Intent intent = new Intent(fragment.getContext(), PostDetailActivity.class);
+            intent.putExtra("post", post);
+            intent.putExtra("position", position); // 게시글의 위치(position) 전달
+            fragment.startActivityForResult(intent, BoardFragment.REQUEST_CODE_POST_DETAIL);
         });
     }
 
@@ -66,7 +70,7 @@ class Post implements Serializable {
     String title;
     String content;
     String author;
-    String timestamp; // 작성 시간 추가
+    String timestamp;
     int views;
     List<Comment> comments;
 

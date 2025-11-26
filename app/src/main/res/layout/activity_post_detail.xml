@@ -68,6 +68,23 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="작성 시간"/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@android:drawable/ic_menu_view"
+                    android:alpha="0.5"/>
+                <TextView
+                    android:id="@+id/tv_detail_views"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="0"/>
             </LinearLayout>
 
             <View

@@ -13,15 +13,19 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static android.app.Activity.RESULT_OK;
 
 public class BoardFragment extends Fragment {
 
-    private static final int REQUEST_CODE_WRITE_POST = 101;
+    public static final int REQUEST_CODE_WRITE_POST = 101;
+    public static final int REQUEST_CODE_POST_DETAIL = 102;
     private List<Post> posts;
     private PostAdapter adapter;
 
@@ -41,7 +45,7 @@ public class BoardFragment extends Fragment {
         posts.add(new Post("오늘 날씨 정말 좋네요!", "다들 점심 맛있게 드셨나요?", "날씨좋아", "2025-11-26 14:40", 42, comments2));
 
         // RecyclerView 설정
-        adapter = new PostAdapter(posts);
+        adapter = new PostAdapter(posts, this);
         rvPosts.setAdapter(adapter);
         rvPosts.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -51,17 +55,29 @@ public class BoardFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_WRITE_POST && resultCode == RESULT_OK && data != null) {
-            String title = data.getStringExtra("title");
-            String content = data.getStringExtra("content");
-            String timestamp = data.getStringExtra("timestamp");
+        if (resultCode == RESULT_OK && data != null) {
+            if (requestCode == REQUEST_CODE_WRITE_POST) {
+                // 글쓰기 결과 처리
+                String title = data.getStringExtra("title");
+                String content = data.getStringExtra("content");
+                String timestamp = data.getStringExtra("timestamp");
 
-            SharedPreferences prefs = getActivity().getSharedPreferences("user_prefs", getActivity().MODE_PRIVATE);
-            String author = prefs.getString("user_nickname", "익명");
+                SharedPreferences prefs = getActivity().getSharedPreferences("user_prefs", getActivity().MODE_PRIVATE);
+                String author = prefs.getString("user_nickname", "익명");
 
-            Post newPost = new Post(title, content, author, timestamp, 0, new ArrayList<>());
-            posts.add(0, newPost);
-            adapter.notifyItemInserted(0);
+                Post newPost = new Post(title, content, author, timestamp, 0, new ArrayList<>());
+                posts.add(0, newPost);
+                adapter.notifyItemInserted(0);
+
+            } else if (requestCode == REQUEST_CODE_POST_DETAIL) {
+                // 상세보기 결과 처리 (조회수 증가)
+                int position = data.getIntExtra("position", -1);
+                if (position != -1) {
+                    Post post = posts.get(position);
+                    post.views++; // 조회수 1 증가
+                    adapter.notifyItemChanged(position); // 해당 아이템만 새로고침
+                }
+            }
         }
     }
 }
