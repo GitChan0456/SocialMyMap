@@ -1,177 +1,158 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scroll_view_my_page"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@android:color/white">
+    android:fillViewport="true">
 
-    <!-- Profile Section -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:paddingTop="40dp"
-        android:paddingBottom="24dp">
+        android:padding="16dp">
 
         <ImageView
-            android:id="@+id/iv_profile"
             android:layout_width="100dp"
             android:layout_height="100dp"
+            android:layout_gravity="center_horizontal"
             android:src="@drawable/ic_feature_people"
-            android:background="@drawable/bg_icon_circle"
-            android:padding="20dp"/>
+            android:layout_marginTop="48dp"
+            android:layout_marginBottom="16dp"/>
 
         <TextView
             android:id="@+id/tv_nickname"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="배고픈개발자"
+            android:text="사용자 닉네임"
             android:textSize="22sp"
-            android:textColor="@android:color/black"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="4dp"/>
 
         <TextView
             android:id="@+id/tv_user_email"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_gravity="center_horizontal"
             android:text="email@example.com"
             android:textSize="14sp"
-            android:textColor="@android:color/darker_gray" />
-    </LinearLayout>
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="24dp"/>
 
-    <!-- Stats Section -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp">
-
+        <!-- Post/Comment Stats Section -->
         <LinearLayout
-            android:id="@+id/layout_my_posts"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:background="#F8F8F8"
+            android:paddingVertical="12dp"
+            android:layout_marginBottom="24dp">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView
+                    android:id="@+id/tv_my_posts_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="내가 쓴 글"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView
+                    android:id="@+id/tv_my_comments_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="내가 쓴 댓글"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Menu Section -->
+        <TextView
+            android:id="@+id/tv_profile_edit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="프로필 수정"
+            android:textSize="18sp"
+            android:padding="16dp"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackground">
-            <TextView
-                android:id="@+id/tv_post_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="작성한 글"/>
-        </LinearLayout>
-
+            android:background="?attr/selectableItemBackground"/>
         <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:background="@android:color/darker_gray"/>
-
-        <LinearLayout
-            android:id="@+id/layout_my_comments"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F5F5F5" />
+        <TextView
+            android:id="@+id/tv_my_posts"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/tv_comment_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="댓글"/>
-        </LinearLayout>
+            android:text="내가 쓴 글"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F5F5F5" />
+        <TextView
+            android:id="@+id/tv_friend_management"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="친구 관리"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F5F5F5" />
+        <TextView
+            android:id="@+id/tv_logout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="로그아웃"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F5F5F5" />
+        <TextView
+            android:id="@+id/tv_delete_account"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="탈퇴하기"
+            android:textColor="#F44336"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"/>
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:background="#F5F5F5" />
-
-    <!-- Menu Section -->
-    <TextView
-        android:id="@+id/tv_profile_edit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="프로필 설정"
-        android:textSize="18sp"
-        android:padding="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?attr/selectableItemBackground"/>
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#F5F5F5" />
-    <TextView
-        android:id="@+id/tv_manage_favorites"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="즐겨찾는 장소"
-        android:textSize="18sp"
-        android:padding="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?attr/selectableItemBackground"/>
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#F5F5F5" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="내 정보 보기"
-        android:textSize="18sp"
-        android:padding="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?attr/selectableItemBackground"/>
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:background="#F5F5F5" />
-    <TextView
-        android:id="@+id/tv_logout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="로그아웃"
-        android:textSize="18sp"
-        android:padding="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?attr/selectableItemBackground"/>
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#F5F5F5" />
-    <TextView
-        android:id="@+id/tv_delete_account"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="탈퇴하기"
-        android:textColor="#F44336"
-        android:textSize="18sp"
-        android:padding="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?attr/selectableItemBackground"/>
-
-</LinearLayout>
+</ScrollView>
