@@ -13,12 +13,14 @@ import java.util.List;
 
 public class MyCommentsActivity extends AppCompatActivity {
 
-    public static final String EXTRA_AUTHOR = "extra_author";
+    public static final String EXTRA_AUTHOR_ID = "extra_author_id";
+    public static final String EXTRA_AUTHOR_NICK = "extra_author_nick";
 
     private final List<MyCommentItem> items = new ArrayList<>();
     private MyCommentsAdapter adapter;
     private CommunityDao communityDao;
-    private String author;
+    private String authorId;
+    private String authorNick;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +32,9 @@ public class MyCommentsActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        author = getIntent().getStringExtra(EXTRA_AUTHOR);
-        if (author == null) {
+        authorId = getIntent().getStringExtra(EXTRA_AUTHOR_ID);
+        authorNick = getIntent().getStringExtra(EXTRA_AUTHOR_NICK);
+        if (authorId == null && authorNick == null) {
             finish();
             return;
         }
@@ -53,7 +56,8 @@ public class MyCommentsActivity extends AppCompatActivity {
 
     private void loadComments() {
         items.clear();
-        items.addAll(communityDao.getCommentsByAuthorId(author));
+        List<MyCommentItem> list = communityDao.getCommentsByAuthor(authorId, authorNick);
+        items.addAll(list);
         adapter.notifyDataSetChanged();
     }
 

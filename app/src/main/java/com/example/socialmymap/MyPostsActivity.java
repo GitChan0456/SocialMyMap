@@ -14,12 +14,14 @@ import java.util.List;
 
 public class MyPostsActivity extends AppCompatActivity {
 
-    public static final String EXTRA_AUTHOR = "extra_author";
+    public static final String EXTRA_AUTHOR_ID = "extra_author_id";
+    public static final String EXTRA_AUTHOR_NICK = "extra_author_nick";
 
     private final List<Post> myPosts = new ArrayList<>();
     private PostAdapter adapter;
     private CommunityDao communityDao;
-    private String author;
+    private String authorId;
+    private String authorNick;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +33,9 @@ public class MyPostsActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        author = getIntent().getStringExtra(EXTRA_AUTHOR);
-        if (author == null) {
+        authorId = getIntent().getStringExtra(EXTRA_AUTHOR_ID);
+        authorNick = getIntent().getStringExtra(EXTRA_AUTHOR_NICK);
+        if (authorId == null && authorNick == null) {
             finish();
             return;
         }
@@ -54,7 +57,7 @@ public class MyPostsActivity extends AppCompatActivity {
 
     private void loadMyPosts() {
         myPosts.clear();
-        myPosts.addAll(communityDao.getPostsByAuthorId(author));
+        myPosts.addAll(communityDao.getPostsByAuthor(authorId, authorNick));
         adapter.notifyDataSetChanged();
     }
 

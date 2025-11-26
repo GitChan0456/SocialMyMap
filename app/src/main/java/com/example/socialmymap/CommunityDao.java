@@ -116,9 +116,9 @@ public class CommunityDao {
         return result;
     }
 
-    public int countPostsByAuthorId(String authorId) {
+    public int countPostsByAuthor(String authorId, String authorNickname) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_POSTS + " WHERE author_id = ?", new String[]{authorId});
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_POSTS + " WHERE author_id = ? OR author_nickname = ?", new String[]{authorId, authorNickname});
         try {
             if (cursor.moveToFirst()) {
                 return cursor.getInt(0);
@@ -129,13 +129,13 @@ public class CommunityDao {
         return 0;
     }
 
-    public List<Post> getPostsByAuthorId(String authorId) {
+    public List<Post> getPostsByAuthor(String authorId, String authorNickname) {
         List<Post> result = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(CommunityDBHelper.TABLE_POSTS,
                 null,
-                "author_id = ?",
-                new String[]{authorId},
+                "author_id = ? OR author_nickname = ?",
+                new String[]{authorId, authorNickname},
                 null,
                 null,
                 "id DESC");
@@ -162,9 +162,9 @@ public class CommunityDao {
         return db.delete(CommunityDBHelper.TABLE_POSTS, "id = ?", new String[]{String.valueOf(id)});
     }
 
-    public int countCommentsByAuthorId(String authorId) {
+    public int countCommentsByAuthor(String authorId, String authorNickname) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_COMMENTS + " WHERE author_id = ?", new String[]{authorId});
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_COMMENTS + " WHERE author_id = ? OR author_nickname = ?", new String[]{authorId, authorNickname});
         try {
             if (cursor.moveToFirst()) {
                 return cursor.getInt(0);
@@ -175,16 +175,16 @@ public class CommunityDao {
         return 0;
     }
 
-    public List<MyCommentItem> getCommentsByAuthorId(String authorId) {
+    public List<MyCommentItem> getCommentsByAuthor(String authorId, String authorNickname) {
         List<MyCommentItem> result = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery(
                 "SELECT c.id, c.post_id, c.content, c.timestamp, p.title " +
                         "FROM " + CommunityDBHelper.TABLE_COMMENTS + " c " +
                         "JOIN " + CommunityDBHelper.TABLE_POSTS + " p ON c.post_id = p.id " +
-                        "WHERE c.author_id = ? " +
+                        "WHERE c.author_id = ? OR c.author_nickname = ? " +
                         "ORDER BY c.id DESC",
-                new String[]{authorId});
+                new String[]{authorId, authorNickname});
         try {
             while (cursor.moveToNext()) {
                 MyCommentItem item = new MyCommentItem(
