@@ -31,6 +31,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private long postId = -1;
     private CommunityDao communityDao;
     private String author;
+    private String authorId;
     private TextView tvTitle;
     private TextView tvAuthor;
     private TextView tvTime;
@@ -87,11 +88,12 @@ public class PostDetailActivity extends AppCompatActivity {
 
             SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
             String currentUser = prefs.getString("user_nickname", "익명");
+            String currentUserId = prefs.getString("user_id", "");
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
             String timestamp = sdf.format(new Date());
 
-            Comment newComment = new Comment(postId, currentUser, commentText, timestamp);
+            Comment newComment = new Comment(postId, currentUserId, currentUser, commentText, timestamp);
             communityDao.insertComment(newComment);
 
             etComment.setText("");
@@ -117,6 +119,7 @@ public class PostDetailActivity extends AppCompatActivity {
         tvTitle.setText(post.title);
         tvAuthor.setText(post.author);
         author = post.author;
+        authorId = post.authorId;
         tvContent.setText(post.content);
         tvTime.setText(post.timestamp);
         tvViews.setText(String.valueOf(post.views));
@@ -166,8 +169,8 @@ public class PostDetailActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_post_detail, menu);
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        String currentUser = prefs.getString("user_nickname", "익명");
-        boolean isAuthor = currentUser.equals(author);
+        String currentUserId = prefs.getString("user_id", "");
+        boolean isAuthor = currentUserId.equals(authorId);
         MenuItem deleteItem = menu.findItem(R.id.menu_delete_post);
         deleteItem.setVisible(isAuthor);
         return true;

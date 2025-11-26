@@ -16,6 +16,7 @@ public class MyPageActivity extends AppCompatActivity {
     private UserDao userDao;
     private CommunityDao communityDao;
     private TextView tvNickname, tvUserEmail, tvPostCount, tvCommentCount;
+    private String userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,13 +43,13 @@ public class MyPageActivity extends AppCompatActivity {
 
         findViewById(R.id.layout_my_posts).setOnClickListener(v -> {
             Intent intent = new Intent(MyPageActivity.this, MyPostsActivity.class);
-            intent.putExtra(MyPostsActivity.EXTRA_AUTHOR, tvNickname.getText().toString());
+            intent.putExtra(MyPostsActivity.EXTRA_AUTHOR, userId);
             startActivity(intent);
         });
 
         findViewById(R.id.layout_my_comments).setOnClickListener(v -> {
             Intent intent = new Intent(MyPageActivity.this, MyCommentsActivity.class);
-            intent.putExtra(MyCommentsActivity.EXTRA_AUTHOR, tvNickname.getText().toString());
+            intent.putExtra(MyCommentsActivity.EXTRA_AUTHOR, userId);
             startActivity(intent);
         });
 
@@ -81,9 +82,9 @@ public class MyPageActivity extends AppCompatActivity {
                     .setMessage("모든 정보가 삭제됩니다. 정말 탈퇴하시겠습니까?")
                     .setPositiveButton("예", (dialog, which) -> {
                         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-                        String userId = prefs.getString("user_id", null);
-                        if (userId != null) {
-                            userDao.deleteUser(userId);
+                        String uid = prefs.getString("user_id", null);
+                        if (uid != null) {
+                            userDao.deleteUser(uid);
 
                             SharedPreferences.Editor editor = prefs.edit();
                             editor.clear();
@@ -109,6 +110,7 @@ public class MyPageActivity extends AppCompatActivity {
 
     private void loadUserData() {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        userId = prefs.getString("user_id", "");
         String nickname = prefs.getString("user_nickname", "사용자");
         String email = prefs.getString("user_email", null);
 
@@ -119,10 +121,10 @@ public class MyPageActivity extends AppCompatActivity {
             tvUserEmail.setText(email);
         }
 
-        int postCount = communityDao.countPostsByAuthor(nickname);
+        int postCount = communityDao.countPostsByAuthorId(userId);
         tvPostCount.setText(String.valueOf(postCount));
 
-        int commentCount = communityDao.countCommentsByAuthor(nickname);
+        int commentCount = communityDao.countCommentsByAuthorId(userId);
         tvCommentCount.setText(String.valueOf(commentCount));
     }
 

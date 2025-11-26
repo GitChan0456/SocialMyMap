@@ -84,10 +84,11 @@ public class BoardFragment extends Fragment {
 
         SharedPreferences prefs = requireActivity().getSharedPreferences("user_prefs", requireActivity().MODE_PRIVATE);
         String author = prefs.getString("user_nickname", "익명");
+        String authorId = prefs.getString("user_id", "");
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
         String now = sdf.format(new Date());
 
-        communityDao.insertPost(new Post("첫 글", "샘플 내용입니다.", author, now));
+        communityDao.insertPost(new Post(authorId, "첫 글", "샘플 내용입니다.", author, now));
         loadPosts();
     }
 }

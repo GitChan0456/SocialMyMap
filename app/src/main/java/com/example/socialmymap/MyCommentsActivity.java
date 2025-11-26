@@ -53,7 +53,7 @@ public class MyCommentsActivity extends AppCompatActivity {
 
     private void loadComments() {
         items.clear();
-        items.addAll(communityDao.getCommentsByAuthor(author));
+        items.addAll(communityDao.getCommentsByAuthorId(author));
         adapter.notifyDataSetChanged();
     }
 

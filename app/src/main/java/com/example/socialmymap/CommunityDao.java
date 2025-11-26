@@ -18,13 +18,27 @@ public class CommunityDao {
     public long insertPost(Post post) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put("author_id", post.authorId);
+        values.put("author_nickname", post.author);
         values.put("title", post.title);
         values.put("content", post.content);
-        values.put("author", post.author);
         values.put("timestamp", post.timestamp);
         values.put("views", post.views);
         values.put("comment_count", post.commentCount);
         return db.insert(CommunityDBHelper.TABLE_POSTS, null, values);
+    }
+
+    private Post cursorToPost(Cursor cursor) {
+        return new Post(
+                cursor.getLong(cursor.getColumnIndexOrThrow("id")),
+                cursor.getString(cursor.getColumnIndexOrThrow("author_id")),
+                cursor.getString(cursor.getColumnIndexOrThrow("title")),
+                cursor.getString(cursor.getColumnIndexOrThrow("content")),
+                cursor.getString(cursor.getColumnIndexOrThrow("author_nickname")),
+                cursor.getString(cursor.getColumnIndexOrThrow("timestamp")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("views")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("comment_count"))
+        );
     }
 
     public List<Post> getAllPosts() {
@@ -34,16 +48,7 @@ public class CommunityDao {
                 null, null, null, null, null, "id DESC");
         try {
             while (cursor.moveToNext()) {
-                Post post = new Post(
-                        cursor.getLong(cursor.getColumnIndexOrThrow("id")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("title")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("content")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("author")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("timestamp")),
-                        cursor.getInt(cursor.getColumnIndexOrThrow("views")),
-                        cursor.getInt(cursor.getColumnIndexOrThrow("comment_count"))
-                );
-                result.add(post);
+                result.add(cursorToPost(cursor));
             }
         } finally {
             cursor.close();
@@ -58,15 +63,7 @@ public class CommunityDao {
                 null, null, null);
         try {
             if (cursor.moveToFirst()) {
-                return new Post(
-                        cursor.getLong(cursor.getColumnIndexOrThrow("id")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("title")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("content")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("author")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("timestamp")),
-                        cursor.getInt(cursor.getColumnIndexOrThrow("views")),
-                        cursor.getInt(cursor.getColumnIndexOrThrow("comment_count"))
-                );
+                return cursorToPost(cursor);
             }
         } finally {
             cursor.close();
@@ -83,7 +80,8 @@ public class CommunityDao {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("post_id", comment.postId);
-        values.put("author", comment.author);
+        values.put("author_id", comment.authorId);
+        values.put("author_nickname", comment.author);
         values.put("content", comment.content);
         values.put("timestamp", comment.timestamp);
         long id = db.insert(CommunityDBHelper.TABLE_COMMENTS, null, values);
@@ -105,7 +103,8 @@ public class CommunityDao {
                 Comment comment = new Comment(
                         cursor.getLong(cursor.getColumnIndexOrThrow("id")),
                         cursor.getLong(cursor.getColumnIndexOrThrow("post_id")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("author")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("author_id")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("author_nickname")),
                         cursor.getString(cursor.getColumnIndexOrThrow("content")),
                         cursor.getString(cursor.getColumnIndexOrThrow("timestamp"))
                 );
@@ -117,9 +116,9 @@ public class CommunityDao {
         return result;
     }
 
-    public int countPostsByAuthor(String author) {
+    public int countPostsByAuthorId(String authorId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_POSTS + " WHERE author = ?", new String[]{author});
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_POSTS + " WHERE author_id = ?", new String[]{authorId});
         try {
             if (cursor.moveToFirst()) {
                 return cursor.getInt(0);
@@ -130,28 +129,19 @@ public class CommunityDao {
         return 0;
     }
 
-    public List<Post> getPostsByAuthor(String author) {
+    public List<Post> getPostsByAuthorId(String authorId) {
         List<Post> result = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(CommunityDBHelper.TABLE_POSTS,
                 null,
-                "author = ?",
-                new String[]{author},
+                "author_id = ?",
+                new String[]{authorId},
                 null,
                 null,
                 "id DESC");
         try {
             while (cursor.moveToNext()) {
-                Post post = new Post(
-                        cursor.getLong(cursor.getColumnIndexOrThrow("id")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("title")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("content")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("author")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("timestamp")),
-                        cursor.getInt(cursor.getColumnIndexOrThrow("views")),
-                        cursor.getInt(cursor.getColumnIndexOrThrow("comment_count"))
-                );
-                result.add(post);
+                result.add(cursorToPost(cursor));
             }
         } finally {
             cursor.close();
@@ -172,9 +162,9 @@ public class CommunityDao {
         return db.delete(CommunityDBHelper.TABLE_POSTS, "id = ?", new String[]{String.valueOf(id)});
     }
 
-    public int countCommentsByAuthor(String author) {
+    public int countCommentsByAuthorId(String authorId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_COMMENTS + " WHERE author = ?", new String[]{author});
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_COMMENTS + " WHERE author_id = ?", new String[]{authorId});
         try {
             if (cursor.moveToFirst()) {
                 return cursor.getInt(0);
@@ -185,16 +175,16 @@ public class CommunityDao {
         return 0;
     }
 
-    public List<MyCommentItem> getCommentsByAuthor(String author) {
+    public List<MyCommentItem> getCommentsByAuthorId(String authorId) {
         List<MyCommentItem> result = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery(
                 "SELECT c.id, c.post_id, c.content, c.timestamp, p.title " +
                         "FROM " + CommunityDBHelper.TABLE_COMMENTS + " c " +
                         "JOIN " + CommunityDBHelper.TABLE_POSTS + " p ON c.post_id = p.id " +
-                        "WHERE c.author = ? " +
+                        "WHERE c.author_id = ? " +
                         "ORDER BY c.id DESC",
-                new String[]{author});
+                new String[]{authorId});
         try {
             while (cursor.moveToNext()) {
                 MyCommentItem item = new MyCommentItem(

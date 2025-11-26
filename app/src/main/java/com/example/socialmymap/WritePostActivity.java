@@ -1,5 +1,6 @@
 package com.example.socialmymap;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -62,13 +63,14 @@ public class WritePostActivity extends AppCompatActivity {
             return;
         }
 
-        String author = getSharedPreferences("user_prefs", MODE_PRIVATE)
-                .getString("user_nickname", "익명");
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String author = prefs.getString("user_nickname", "익명");
+        String authorId = prefs.getString("user_id", "");
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
         String timestamp = sdf.format(new Date());
 
-        Post post = new Post(title, content, author, timestamp);
+        Post post = new Post(authorId, title, content, author, timestamp);
         communityDao.insertPost(post);
 
         setResult(RESULT_OK);

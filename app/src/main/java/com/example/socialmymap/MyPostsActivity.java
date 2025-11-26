@@ -54,7 +54,7 @@ public class MyPostsActivity extends AppCompatActivity {
 
     private void loadMyPosts() {
         myPosts.clear();
-        myPosts.addAll(communityDao.getPostsByAuthor(author));
+        myPosts.addAll(communityDao.getPostsByAuthorId(author));
         adapter.notifyDataSetChanged();
     }
 

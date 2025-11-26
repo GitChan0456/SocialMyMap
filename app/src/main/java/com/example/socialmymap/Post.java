@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class Post implements Serializable {
     public long id;
+    public String authorId;
     public String title;
     public String content;
     public String author;
@@ -14,8 +15,9 @@ public class Post implements Serializable {
     public Post() {
     }
 
-    public Post(long id, String title, String content, String author, String timestamp, int views, int commentCount) {
+    public Post(long id, String authorId, String title, String content, String author, String timestamp, int views, int commentCount) {
         this.id = id;
+        this.authorId = authorId;
         this.title = title;
         this.content = content;
         this.author = author;
@@ -24,7 +26,7 @@ public class Post implements Serializable {
         this.commentCount = commentCount;
     }
 
-    public Post(String title, String content, String author, String timestamp) {
-        this(0, title, content, author, timestamp, 0, 0);
+    public Post(String authorId, String title, String content, String author, String timestamp) {
+        this(0, authorId, title, content, author, timestamp, 0, 0);
     }
 }
