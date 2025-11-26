@@ -1,7 +1,5 @@
 package com.example.socialmymap;
 
-import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +17,11 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         this.commentList = commentList;
     }
 
+    public void addComment(Comment comment) {
+        commentList.add(comment);
+        notifyItemInserted(commentList.size() - 1);
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -31,7 +34,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         Comment comment = commentList.get(position);
         holder.tvAuthor.setText(comment.author);
         holder.tvContent.setText(comment.content);
-        holder.tvTime.setText(comment.time);
+        holder.tvTime.setText(comment.timestamp); // 실제 시간으로 변경
     }
 
     @Override
@@ -54,11 +57,11 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 class Comment implements Serializable {
     String author;
     String content;
-    String time;
+    String timestamp; // 작성 시간 추가
 
-    public Comment(String author, String content, String time) {
+    public Comment(String author, String content, String timestamp) {
         this.author = author;
         this.content = content;
-        this.time = time;
+        this.timestamp = timestamp;
     }
 }

@@ -33,15 +33,12 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvContent.setText(post.content);
         holder.tvAuthor.setText(post.author);
         holder.tvViews.setText(String.valueOf(post.views));
-        holder.tvComments.setText(String.valueOf(post.comments.size())); // 실제 댓글 개수로 설정
+        holder.tvComments.setText(String.valueOf(post.comments.size()));
 
         holder.itemView.setOnClickListener(v -> {
             Context context = holder.itemView.getContext();
             Intent intent = new Intent(context, PostDetailActivity.class);
-            intent.putExtra("title", post.title);
-            intent.putExtra("content", post.content);
-            intent.putExtra("author", post.author);
-            intent.putExtra("comments", (Serializable) post.comments); // 댓글 리스트 전달
+            intent.putExtra("post", post); // Post 객체 전체를 전달
             context.startActivity(intent);
         });
     }
@@ -65,18 +62,19 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 }
 
-// Post 데이터 클래스 수정
 class Post implements Serializable {
     String title;
     String content;
     String author;
+    String timestamp; // 작성 시간 추가
     int views;
-    List<Comment> comments; // 댓글 리스트 추가
+    List<Comment> comments;
 
-    public Post(String title, String content, String author, int views, List<Comment> comments) {
+    public Post(String title, String content, String author, String timestamp, int views, List<Comment> comments) {
         this.title = title;
         this.content = content;
         this.author = author;
+        this.timestamp = timestamp;
         this.views = views;
         this.comments = comments;
     }
