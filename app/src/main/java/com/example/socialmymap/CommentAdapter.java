@@ -4,14 +4,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import java.io.Serializable;
+
 import java.util.List;
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
 
-    private List<Comment> commentList;
+    private final List<Comment> commentList;
 
     public CommentAdapter(List<Comment> commentList) {
         this.commentList = commentList;
@@ -34,7 +35,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         Comment comment = commentList.get(position);
         holder.tvAuthor.setText(comment.author);
         holder.tvContent.setText(comment.content);
-        holder.tvTime.setText(comment.timestamp); // 실제 시간으로 변경
+        holder.tvTime.setText(comment.timestamp);
     }
 
     @Override
@@ -51,17 +52,5 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             tvContent = itemView.findViewById(R.id.tv_comment_content);
             tvTime = itemView.findViewById(R.id.tv_comment_time);
         }
-    }
-}
-
-class Comment implements Serializable {
-    String author;
-    String content;
-    String timestamp; // 작성 시간 추가
-
-    public Comment(String author, String content, String timestamp) {
-        this.author = author;
-        this.content = content;
-        this.timestamp = timestamp;
     }
 }

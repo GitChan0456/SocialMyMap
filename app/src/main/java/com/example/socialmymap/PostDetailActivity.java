@@ -24,9 +24,16 @@ import java.util.Locale;
 public class PostDetailActivity extends AppCompatActivity {
 
     private CommentAdapter adapter;
-    private List<Comment> comments;
+    private final List<Comment> comments = new ArrayList<>();
     private EditText etComment;
     private int position = -1;
+    private long postId = -1;
+    private CommunityDao communityDao;
+    private TextView tvTitle;
+    private TextView tvAuthor;
+    private TextView tvTime;
+    private TextView tvContent;
+    private TextView tvViews;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,44 +45,39 @@ public class PostDetailActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        TextView tvTitle = findViewById(R.id.tv_detail_title);
-        TextView tvAuthor = findViewById(R.id.tv_detail_author);
-        TextView tvTime = findViewById(R.id.tv_detail_time);
-        TextView tvContent = findViewById(R.id.tv_detail_content);
-        TextView tvViews = findViewById(R.id.tv_detail_views);
+        tvTitle = findViewById(R.id.tv_detail_title);
+        tvAuthor = findViewById(R.id.tv_detail_author);
+        tvTime = findViewById(R.id.tv_detail_time);
+        tvContent = findViewById(R.id.tv_detail_content);
+        tvViews = findViewById(R.id.tv_detail_views);
         RecyclerView rvComments = findViewById(R.id.rv_comments);
         etComment = findViewById(R.id.et_comment);
         Button btnSubmitComment = findViewById(R.id.btn_submit_comment);
 
         Intent intent = getIntent();
-        Post post = (Post) intent.getSerializableExtra("post");
+        postId = intent.getLongExtra("post_id", -1);
         position = intent.getIntExtra("position", -1);
 
-        if (post == null) {
-            Toast.makeText(this, "게시글 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+        if (postId == -1) {
+            Toast.makeText(this, "게시글 정보를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        comments = post.comments;
-        if (comments == null) {
-            comments = new ArrayList<>();
-        }
+        communityDao = new CommunityDao(this);
 
-        tvTitle.setText(post.title);
-        tvAuthor.setText(post.author);
-        tvContent.setText(post.content);
-        tvTime.setText(post.timestamp);
-        tvViews.setText(String.valueOf(post.views));
+        // 조회수 증가 후 다시 읽기
+        communityDao.incrementViews(postId);
+        loadPostAndComments();
 
         adapter = new CommentAdapter(comments);
         rvComments.setAdapter(adapter);
         rvComments.setLayoutManager(new LinearLayoutManager(this));
 
         btnSubmitComment.setOnClickListener(v -> {
-            String commentText = etComment.getText().toString();
+            String commentText = etComment.getText().toString().trim();
             if (commentText.isEmpty()) {
-                Toast.makeText(this, "댓글을 입력해주세요.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "댓글을 입력하세요.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -85,19 +87,43 @@ public class PostDetailActivity extends AppCompatActivity {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
             String timestamp = sdf.format(new Date());
 
-            Comment newComment = new Comment(currentUser, commentText, timestamp);
-            adapter.addComment(newComment);
+            Comment newComment = new Comment(postId, currentUser, commentText, timestamp);
+            communityDao.insertComment(newComment);
+
             etComment.setText("");
+            loadComments();
             rvComments.scrollToPosition(adapter.getItemCount() - 1);
         });
 
-        // 결과 반환 로직 설정
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 setResultAndFinish();
             }
         });
+    }
+
+    private void loadPostAndComments() {
+        Post post = communityDao.getPostById(postId);
+        if (post == null) {
+            Toast.makeText(this, "게시글 정보를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        tvTitle.setText(post.title);
+        tvAuthor.setText(post.author);
+        tvContent.setText(post.content);
+        tvTime.setText(post.timestamp);
+        tvViews.setText(String.valueOf(post.views));
+        loadComments();
+    }
+
+    private void loadComments() {
+        comments.clear();
+        comments.addAll(communityDao.getComments(postId));
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private void setResultAndFinish() {

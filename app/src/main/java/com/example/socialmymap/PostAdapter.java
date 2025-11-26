@@ -1,22 +1,21 @@
 package com.example.socialmymap;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
-import java.io.Serializable;
+
 import java.util.List;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
-    private List<Post> postList;
-    private Fragment fragment;
+    private final List<Post> postList;
+    private final Fragment fragment;
 
     public PostAdapter(List<Post> postList, Fragment fragment) {
         this.postList = postList;
@@ -37,12 +36,12 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvContent.setText(post.content);
         holder.tvAuthor.setText(post.author);
         holder.tvViews.setText(String.valueOf(post.views));
-        holder.tvComments.setText(String.valueOf(post.comments.size()));
+        holder.tvComments.setText(String.valueOf(post.commentCount));
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(fragment.getContext(), PostDetailActivity.class);
-            intent.putExtra("post", post);
-            intent.putExtra("position", position); // 게시글의 위치(position) 전달
+            intent.putExtra("post_id", post.id);
+            intent.putExtra("position", position);
             fragment.startActivityForResult(intent, BoardFragment.REQUEST_CODE_POST_DETAIL);
         });
     }
@@ -63,23 +62,5 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             tvViews = itemView.findViewById(R.id.tv_post_views);
             tvComments = itemView.findViewById(R.id.tv_post_comments);
         }
-    }
-}
-
-class Post implements Serializable {
-    String title;
-    String content;
-    String author;
-    String timestamp;
-    int views;
-    List<Comment> comments;
-
-    public Post(String title, String content, String author, String timestamp, int views, List<Comment> comments) {
-        this.title = title;
-        this.content = content;
-        this.author = author;
-        this.timestamp = timestamp;
-        this.views = views;
-        this.comments = comments;
     }
 }

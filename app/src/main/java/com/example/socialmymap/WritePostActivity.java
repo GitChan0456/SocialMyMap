@@ -1,11 +1,11 @@
 package com.example.socialmymap;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -17,6 +17,7 @@ import java.util.Locale;
 public class WritePostActivity extends AppCompatActivity {
 
     private EditText etTitle, etContent;
+    private CommunityDao communityDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +32,7 @@ public class WritePostActivity extends AppCompatActivity {
 
         etTitle = findViewById(R.id.et_write_title);
         etContent = findViewById(R.id.et_write_content);
+        communityDao = new CommunityDao(this);
     }
 
     @Override
@@ -45,26 +47,31 @@ public class WritePostActivity extends AppCompatActivity {
             finish();
             return true;
         } else if (item.getItemId() == R.id.menu_submit) {
-            String title = etTitle.getText().toString();
-            String content = etContent.getText().toString();
-
-            if (title.isEmpty() || content.isEmpty()) {
-                Toast.makeText(this, "제목과 내용을 모두 입력해주세요.", Toast.LENGTH_SHORT).show();
-            } else {
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("title", title);
-                resultIntent.putExtra("content", content);
-                
-                // 현재 시간 기록
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-                String timestamp = sdf.format(new Date());
-                resultIntent.putExtra("timestamp", timestamp);
-
-                setResult(RESULT_OK, resultIntent);
-                finish();
-            }
+            submitPost();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void submitPost() {
+        String title = etTitle.getText().toString().trim();
+        String content = etContent.getText().toString().trim();
+
+        if (title.isEmpty() || content.isEmpty()) {
+            Toast.makeText(this, "제목과 내용을 모두 입력하세요.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String author = getSharedPreferences("user_prefs", MODE_PRIVATE)
+                .getString("user_nickname", "익명");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        String timestamp = sdf.format(new Date());
+
+        Post post = new Post(title, content, author, timestamp);
+        communityDao.insertPost(post);
+
+        setResult(RESULT_OK);
+        finish();
     }
 }

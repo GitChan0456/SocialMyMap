@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -26,58 +25,60 @@ public class BoardFragment extends Fragment {
 
     public static final int REQUEST_CODE_WRITE_POST = 101;
     public static final int REQUEST_CODE_POST_DETAIL = 102;
-    private List<Post> posts;
+
     private PostAdapter adapter;
+    private final List<Post> posts = new ArrayList<>();
+    private CommunityDao communityDao;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_board, container, false);
 
+        communityDao = new CommunityDao(requireContext());
+
         RecyclerView rvPosts = view.findViewById(R.id.rv_posts_fragment);
-
-        // 가짜 데이터 생성
-        posts = new ArrayList<>();
-        List<Comment> comments1 = new ArrayList<>(Arrays.asList(new Comment("새로운유저", "반가워요!", "2025-11-26 15:01")));
-        posts.add(new Post("첫 방문입니다. 잘 부탁드려요!", "안녕하세요, 새로 가입했습니다.", "새로운유저", "2025-11-26 15:00", 15, comments1));
-
-        List<Comment> comments2 = new ArrayList<>(Arrays.asList(new Comment("맛집탐방러", "오! 저도 오늘 날씨 좋아서 공원 다녀왔어요.", "2025-11-26 14:50"), new Comment("길찾기달인", "미세먼지도 없어서 좋네요~", "2025-11-26 14:55")));
-        posts.add(new Post("오늘 날씨 정말 좋네요!", "다들 점심 맛있게 드셨나요?", "날씨좋아", "2025-11-26 14:40", 42, comments2));
-
-        // RecyclerView 설정
         adapter = new PostAdapter(posts, this);
         rvPosts.setAdapter(adapter);
         rvPosts.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        loadPosts();
         return view;
+    }
+
+    private void loadPosts() {
+        posts.clear();
+        posts.addAll(communityDao.getAllPosts());
+        adapter.notifyDataSetChanged();
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && data != null) {
-            if (requestCode == REQUEST_CODE_WRITE_POST) {
-                // 글쓰기 결과 처리
-                String title = data.getStringExtra("title");
-                String content = data.getStringExtra("content");
-                String timestamp = data.getStringExtra("timestamp");
+        if (resultCode != RESULT_OK) return;
 
-                SharedPreferences prefs = getActivity().getSharedPreferences("user_prefs", getActivity().MODE_PRIVATE);
-                String author = prefs.getString("user_nickname", "익명");
-
-                Post newPost = new Post(title, content, author, timestamp, 0, new ArrayList<>());
-                posts.add(0, newPost);
-                adapter.notifyItemInserted(0);
-
-            } else if (requestCode == REQUEST_CODE_POST_DETAIL) {
-                // 상세보기 결과 처리 (조회수 증가)
-                int position = data.getIntExtra("position", -1);
-                if (position != -1) {
-                    Post post = posts.get(position);
-                    post.views++; // 조회수 1 증가
-                    adapter.notifyItemChanged(position); // 해당 아이템만 새로고침
-                }
-            }
+        if (requestCode == REQUEST_CODE_WRITE_POST) {
+            // 새 글 작성 완료 후 목록 새로고침
+            loadPosts();
+        } else if (requestCode == REQUEST_CODE_POST_DETAIL) {
+            // 상세에서 돌아왔을 때 조회수/댓글수 반영
+            loadPosts();
         }
+    }
+
+    /**
+     * 외부에서 테스트용 더미 데이터를 넣고 싶을 때 사용할 수 있는 헬퍼.
+     * 실제 사용 시에는 WritePostActivity에서 DB에 저장하므로 필요 없음.
+     */
+    private void insertDummyIfEmpty() {
+        if (!communityDao.getAllPosts().isEmpty()) return;
+
+        SharedPreferences prefs = requireActivity().getSharedPreferences("user_prefs", requireActivity().MODE_PRIVATE);
+        String author = prefs.getString("user_nickname", "익명");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        String now = sdf.format(new Date());
+
+        communityDao.insertPost(new Post("첫 글", "샘플 내용입니다.", author, now));
+        loadPosts();
     }
 }
