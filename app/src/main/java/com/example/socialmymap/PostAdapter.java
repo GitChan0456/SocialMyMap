@@ -39,10 +39,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvComments.setText(String.valueOf(post.commentCount));
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(fragment.getContext(), PostDetailActivity.class);
+            Intent intent = new Intent(holder.itemView.getContext(), PostDetailActivity.class);
             intent.putExtra("post_id", post.id);
             intent.putExtra("position", position);
-            fragment.startActivityForResult(intent, BoardFragment.REQUEST_CODE_POST_DETAIL);
+            holder.itemView.getContext().startActivity(intent);
         });
     }
 

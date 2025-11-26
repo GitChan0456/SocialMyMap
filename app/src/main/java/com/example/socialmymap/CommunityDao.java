@@ -116,4 +116,59 @@ public class CommunityDao {
         }
         return result;
     }
+
+    public int countPostsByAuthor(String author) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_POSTS + " WHERE author = ?", new String[]{author});
+        try {
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } finally {
+            cursor.close();
+        }
+        return 0;
+    }
+
+    public List<Post> getPostsByAuthor(String author) {
+        List<Post> result = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(CommunityDBHelper.TABLE_POSTS,
+                null,
+                "author = ?",
+                new String[]{author},
+                null,
+                null,
+                "id DESC");
+        try {
+            while (cursor.moveToNext()) {
+                Post post = new Post(
+                        cursor.getLong(cursor.getColumnIndexOrThrow("id")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("title")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("content")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("author")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("timestamp")),
+                        cursor.getInt(cursor.getColumnIndexOrThrow("views")),
+                        cursor.getInt(cursor.getColumnIndexOrThrow("comment_count"))
+                );
+                result.add(post);
+            }
+        } finally {
+            cursor.close();
+        }
+        return result;
+    }
+
+    public int updatePost(long id, String title, String content) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("title", title);
+        values.put("content", content);
+        return db.update(CommunityDBHelper.TABLE_POSTS, values, "id = ?", new String[]{String.valueOf(id)});
+    }
+
+    public int deletePost(long id) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.delete(CommunityDBHelper.TABLE_POSTS, "id = ?", new String[]{String.valueOf(id)});
+    }
 }

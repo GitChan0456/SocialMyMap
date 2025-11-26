@@ -3,6 +3,7 @@ package com.example.socialmymap;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
@@ -29,6 +30,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private int position = -1;
     private long postId = -1;
     private CommunityDao communityDao;
+    private String author;
     private TextView tvTitle;
     private TextView tvAuthor;
     private TextView tvTime;
@@ -112,6 +114,7 @@ public class PostDetailActivity extends AppCompatActivity {
         }
         tvTitle.setText(post.title);
         tvAuthor.setText(post.author);
+        author = post.author;
         tvContent.setText(post.content);
         tvTime.setText(post.timestamp);
         tvViews.setText(String.valueOf(post.views));
@@ -138,7 +141,30 @@ public class PostDetailActivity extends AppCompatActivity {
         if (item.getItemId() == android.R.id.home) {
             setResultAndFinish();
             return true;
+        } else if (item.getItemId() == R.id.menu_delete_post) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("삭제")
+                    .setMessage("이 게시글을 삭제하시겠습니까?")
+                    .setPositiveButton("삭제", (d, w) -> {
+                        communityDao.deletePost(postId);
+                        setResult(RESULT_OK);
+                        finish();
+                    })
+                    .setNegativeButton("취소", null)
+                    .show();
+            return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_post_detail, menu);
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String currentUser = prefs.getString("user_nickname", "익명");
+        boolean isAuthor = currentUser.equals(author);
+        MenuItem deleteItem = menu.findItem(R.id.menu_delete_post);
+        deleteItem.setVisible(isAuthor);
+        return true;
     }
 }
