@@ -1,11 +1,14 @@
 package com.example.socialmymap;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import java.io.Serializable;
 import java.util.List;
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
@@ -48,8 +51,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     }
 }
 
-// 가짜 데이터를 위한 간단한 데이터 클래스
-class Comment {
+class Comment implements Serializable {
     String author;
     String content;
     String time;

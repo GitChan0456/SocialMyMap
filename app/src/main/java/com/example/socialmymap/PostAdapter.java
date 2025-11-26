@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import java.io.Serializable;
 import java.util.List;
 import android.content.Context;
 import android.content.Intent;
@@ -32,7 +33,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvContent.setText(post.content);
         holder.tvAuthor.setText(post.author);
         holder.tvViews.setText(String.valueOf(post.views));
-        holder.tvComments.setText(String.valueOf(post.comments));
+        holder.tvComments.setText(String.valueOf(post.comments.size())); // 실제 댓글 개수로 설정
 
         holder.itemView.setOnClickListener(v -> {
             Context context = holder.itemView.getContext();
@@ -40,6 +41,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             intent.putExtra("title", post.title);
             intent.putExtra("content", post.content);
             intent.putExtra("author", post.author);
+            intent.putExtra("comments", (Serializable) post.comments); // 댓글 리스트 전달
             context.startActivity(intent);
         });
     }
@@ -63,15 +65,15 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 }
 
-// 가짜 데이터를 위한 간단한 데이터 클래스
-class Post {
+// Post 데이터 클래스 수정
+class Post implements Serializable {
     String title;
     String content;
     String author;
     int views;
-    int comments;
+    List<Comment> comments; // 댓글 리스트 추가
 
-    public Post(String title, String content, String author, int views, int comments) {
+    public Post(String title, String content, String author, int views, List<Comment> comments) {
         this.title = title;
         this.content = content;
         this.author = author;
