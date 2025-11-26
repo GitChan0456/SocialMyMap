@@ -275,7 +275,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Intent intent = new Intent(this, FavoritesActivity.class);
             startActivityForResult(intent, REQUEST_CODE_FAVORITES);
         });
-        btnBus.setOnClickListener(v -> Toast.makeText(this, "커뮤니티", Toast.LENGTH_SHORT).show());
+        btnBus.setOnClickListener(v -> startActivity(new Intent(this, CommunityActivity.class)));
         btnMyPage.setOnClickListener(v -> startActivity(new Intent(this, MyPageActivity.class)));
         btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnLogout.setOnClickListener(v -> {
