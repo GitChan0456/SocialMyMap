@@ -7,6 +7,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
+import android.content.Context;
+import android.content.Intent;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
@@ -31,6 +33,15 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvAuthor.setText(post.author);
         holder.tvViews.setText(String.valueOf(post.views));
         holder.tvComments.setText(String.valueOf(post.comments));
+
+        holder.itemView.setOnClickListener(v -> {
+            Context context = holder.itemView.getContext();
+            Intent intent = new Intent(context, PostDetailActivity.class);
+            intent.putExtra("title", post.title);
+            intent.putExtra("content", post.content);
+            intent.putExtra("author", post.author);
+            context.startActivity(intent);
+        });
     }
 
     @Override

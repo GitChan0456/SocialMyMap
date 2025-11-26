@@ -49,6 +49,11 @@
             android:theme="@style/Theme.SocialMyMap.NoActionBar" />
 
         <activity
+            android:name=".PostDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SocialMyMap" />
+
+        <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
