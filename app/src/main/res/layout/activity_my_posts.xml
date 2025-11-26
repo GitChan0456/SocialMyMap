@@ -3,7 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:paddingBottom="32dp"
+    android:fitsSystemWindows="true">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_my_posts"
