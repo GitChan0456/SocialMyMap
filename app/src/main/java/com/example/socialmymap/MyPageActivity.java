@@ -15,7 +15,7 @@ public class MyPageActivity extends AppCompatActivity {
 
     private UserDao userDao;
     private CommunityDao communityDao;
-    private TextView tvNickname, tvUserEmail, tvPostCount;
+    private TextView tvNickname, tvUserEmail, tvPostCount, tvCommentCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,13 +34,21 @@ public class MyPageActivity extends AppCompatActivity {
         tvNickname = findViewById(R.id.tv_nickname);
         tvUserEmail = findViewById(R.id.tv_user_email);
         tvPostCount = findViewById(R.id.tv_post_count);
+        tvCommentCount = findViewById(R.id.tv_comment_count);
         TextView tvLogout = findViewById(R.id.tv_logout);
         TextView tvDeleteAccount = findViewById(R.id.tv_delete_account);
         TextView tvProfileEdit = findViewById(R.id.tv_profile_edit);
         TextView tvManageFavorites = findViewById(R.id.tv_manage_favorites);
+
         findViewById(R.id.layout_my_posts).setOnClickListener(v -> {
             Intent intent = new Intent(MyPageActivity.this, MyPostsActivity.class);
             intent.putExtra(MyPostsActivity.EXTRA_AUTHOR, tvNickname.getText().toString());
+            startActivity(intent);
+        });
+
+        findViewById(R.id.layout_my_comments).setOnClickListener(v -> {
+            Intent intent = new Intent(MyPageActivity.this, MyCommentsActivity.class);
+            intent.putExtra(MyCommentsActivity.EXTRA_AUTHOR, tvNickname.getText().toString());
             startActivity(intent);
         });
 
@@ -111,9 +119,11 @@ public class MyPageActivity extends AppCompatActivity {
             tvUserEmail.setText(email);
         }
 
-        // 내가 작성한 커뮤니티 글 수
         int postCount = communityDao.countPostsByAuthor(nickname);
         tvPostCount.setText(String.valueOf(postCount));
+
+        int commentCount = communityDao.countCommentsByAuthor(nickname);
+        tvCommentCount.setText(String.valueOf(commentCount));
     }
 
     @Override

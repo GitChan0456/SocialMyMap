@@ -36,6 +36,7 @@ public class PostDetailActivity extends AppCompatActivity {
     private TextView tvTime;
     private TextView tvContent;
     private TextView tvViews;
+    private TextView tvCommentHeader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +53,7 @@ public class PostDetailActivity extends AppCompatActivity {
         tvTime = findViewById(R.id.tv_detail_time);
         tvContent = findViewById(R.id.tv_detail_content);
         tvViews = findViewById(R.id.tv_detail_views);
+        tvCommentHeader = findViewById(R.id.tv_detail_comment_header);
         RecyclerView rvComments = findViewById(R.id.rv_comments);
         etComment = findViewById(R.id.et_comment);
         Button btnSubmitComment = findViewById(R.id.btn_submit_comment);
@@ -124,6 +126,9 @@ public class PostDetailActivity extends AppCompatActivity {
     private void loadComments() {
         comments.clear();
         comments.addAll(communityDao.getComments(postId));
+        if (tvCommentHeader != null) {
+            tvCommentHeader.setText("댓글 (" + comments.size() + ")");
+        }
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }

@@ -1,6 +1,5 @@
 package com.example.socialmymap;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 
@@ -12,20 +11,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyPostsActivity extends AppCompatActivity {
+public class MyCommentsActivity extends AppCompatActivity {
 
     public static final String EXTRA_AUTHOR = "extra_author";
 
-    private final List<Post> myPosts = new ArrayList<>();
-    private PostAdapter adapter;
+    private final List<MyCommentItem> items = new ArrayList<>();
+    private MyCommentsAdapter adapter;
     private CommunityDao communityDao;
     private String author;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_my_posts);
-        setTitle("내가 쓴 글");
+        setContentView(R.layout.activity_my_comments);
+        setTitle("내 댓글");
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -38,23 +37,23 @@ public class MyPostsActivity extends AppCompatActivity {
         }
 
         communityDao = new CommunityDao(this);
-
-        RecyclerView rv = findViewById(R.id.rv_my_posts);
-        adapter = new PostAdapter(myPosts, null); // Fragment null: 어댑터가 직접 context로 이동
+        RecyclerView rv = findViewById(R.id.rv_my_comments);
+        adapter = new MyCommentsAdapter(items);
         rv.setAdapter(adapter);
         rv.setLayoutManager(new LinearLayoutManager(this));
-        loadMyPosts();
+
+        loadComments();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadMyPosts();
+        loadComments();
     }
 
-    private void loadMyPosts() {
-        myPosts.clear();
-        myPosts.addAll(communityDao.getPostsByAuthor(author));
+    private void loadComments() {
+        items.clear();
+        items.addAll(communityDao.getCommentsByAuthor(author));
         adapter.notifyDataSetChanged();
     }
 

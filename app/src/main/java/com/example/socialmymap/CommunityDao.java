@@ -171,4 +171,44 @@ public class CommunityDao {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         return db.delete(CommunityDBHelper.TABLE_POSTS, "id = ?", new String[]{String.valueOf(id)});
     }
+
+    public int countCommentsByAuthor(String author) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + CommunityDBHelper.TABLE_COMMENTS + " WHERE author = ?", new String[]{author});
+        try {
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } finally {
+            cursor.close();
+        }
+        return 0;
+    }
+
+    public List<MyCommentItem> getCommentsByAuthor(String author) {
+        List<MyCommentItem> result = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT c.id, c.post_id, c.content, c.timestamp, p.title " +
+                        "FROM " + CommunityDBHelper.TABLE_COMMENTS + " c " +
+                        "JOIN " + CommunityDBHelper.TABLE_POSTS + " p ON c.post_id = p.id " +
+                        "WHERE c.author = ? " +
+                        "ORDER BY c.id DESC",
+                new String[]{author});
+        try {
+            while (cursor.moveToNext()) {
+                MyCommentItem item = new MyCommentItem(
+                        cursor.getLong(cursor.getColumnIndexOrThrow("id")),
+                        cursor.getLong(cursor.getColumnIndexOrThrow("post_id")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("title")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("content")),
+                        cursor.getString(cursor.getColumnIndexOrThrow("timestamp"))
+                );
+                result.add(item);
+            }
+        } finally {
+            cursor.close();
+        }
+        return result;
+    }
 }

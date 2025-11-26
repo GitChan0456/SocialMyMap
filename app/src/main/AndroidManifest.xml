@@ -64,6 +64,11 @@
             android:theme="@style/Theme.SocialMyMap" />
 
         <activity
+            android:name=".MyCommentsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SocialMyMap" />
+
+        <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>

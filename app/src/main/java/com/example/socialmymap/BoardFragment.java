@@ -53,6 +53,15 @@ public class BoardFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // 상세에서 돌아왔을 때 목록 데이터 동기화
+        if (communityDao != null) {
+            loadPosts();
+        }
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK) return;

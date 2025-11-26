@@ -17,18 +17,20 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="댓글 입력..."/>
+            android:hint="댓글 입력..." />
+
         <Button
             android:id="@+id/btn_submit_comment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="등록"/>
+            android:text="등록" />
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/comment_input_layout">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -42,7 +44,7 @@
                 android:text="게시글 제목"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/black"/>
+                android:textColor="@android:color/black" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -56,18 +58,18 @@
                     android:id="@+id/tv_detail_author"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="작성자"/>
+                    android:text="작성자" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=" · "/>
+                    android:text=" · " />
 
                 <TextView
                     android:id="@+id/tv_detail_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="작성 시간"/>
+                    android:text="작성 시간" />
 
                 <View
                     android:layout_width="0dp"
@@ -78,49 +80,50 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:src="@android:drawable/ic_menu_view"
-                    android:alpha="0.5"/>
+                    android:alpha="0.5" />
                 <TextView
                     android:id="@+id/tv_detail_views"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
-                    android:text="0"/>
+                    android:text="0" />
             </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="#E0E0E0"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="16dp" />
 
             <TextView
                 android:id="@+id/tv_detail_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="게시글의 전체 내용이 여기에 표시됩니다."
+                android:text="게시글 본문이 표시됩니다."
                 android:textSize="16sp"
-                android:lineSpacingExtra="4dp"/>
+                android:lineSpacingExtra="4dp" />
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="#E0E0E0"
                 android:layout_marginTop="24dp"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="16dp" />
 
             <TextView
+                android:id="@+id/tv_detail_comment_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="댓글"
+                android:text="댓글 (0)"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/black"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="8dp" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_comments"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
