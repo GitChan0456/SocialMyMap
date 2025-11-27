@@ -38,6 +38,8 @@ public class PostDetailActivity extends AppCompatActivity {
     private TextView tvContent;
     private TextView tvViews;
     private TextView tvCommentHeader;
+    private Button btnAddFriend;
+    private FriendsDao friendsDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +57,7 @@ public class PostDetailActivity extends AppCompatActivity {
         tvContent = findViewById(R.id.tv_detail_content);
         tvViews = findViewById(R.id.tv_detail_views);
         tvCommentHeader = findViewById(R.id.tv_detail_comment_header);
+        btnAddFriend = findViewById(R.id.btn_add_friend);
         RecyclerView rvComments = findViewById(R.id.rv_comments);
         etComment = findViewById(R.id.et_comment);
         Button btnSubmitComment = findViewById(R.id.btn_submit_comment);
@@ -70,12 +73,20 @@ public class PostDetailActivity extends AppCompatActivity {
         }
 
         communityDao = new CommunityDao(this);
+        friendsDao = new FriendsDao(this);
+        friendsDao.open();
 
         // 조회수 증가 후 다시 읽기
         communityDao.incrementViews(postId);
         loadPostAndComments();
+        updateFriendButton();
 
         adapter = new CommentAdapter(comments);
+        adapter.setFriendsDao(friendsDao);
+        adapter.setOnFriendAddedListener(() -> {
+            // 댓글에서 친구 추가 시 게시글 버튼도 업데이트
+            updateFriendButton();
+        });
         rvComments.setAdapter(adapter);
         rvComments.setLayoutManager(new LinearLayoutManager(this));
 
@@ -99,6 +110,40 @@ public class PostDetailActivity extends AppCompatActivity {
             etComment.setText("");
             loadComments();
             rvComments.scrollToPosition(adapter.getItemCount() - 1);
+        });
+
+        btnAddFriend.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            String currentUserId = prefs.getString("user_id", "");
+
+            if (currentUserId.equals(authorId)) {
+                Toast.makeText(this, "자기 자신은 친구로 추가할 수 없습니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (friendsDao.isFriend(currentUserId, authorId)) {
+                Toast.makeText(this, "이미 친구입니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("친구 추가")
+                    .setMessage(author + "님을 친구로 추가하시겠습니까?")
+                    .setPositiveButton("추가", (dialog, which) -> {
+                        boolean success = friendsDao.addFriend(currentUserId, authorId, author);
+                        if (success) {
+                            Toast.makeText(this, "친구가 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                            updateFriendButton();
+                            // 게시글에서 친구 추가 시 댓글 버튼들도 업데이트
+                            if (adapter != null) {
+                                adapter.notifyDataSetChanged();
+                            }
+                        } else {
+                            Toast.makeText(this, "친구 추가에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("취소", null)
+                    .show();
         });
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -135,6 +180,27 @@ public class PostDetailActivity extends AppCompatActivity {
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
+    }
+
+    private void updateFriendButton() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String currentUserId = prefs.getString("user_id", "");
+
+        if (authorId == null || currentUserId.equals(authorId)) {
+            btnAddFriend.setVisibility(android.view.View.GONE);
+            return;
+        }
+
+        if (friendsDao.isFriend(currentUserId, authorId)) {
+            btnAddFriend.setText("친구");
+            btnAddFriend.setEnabled(false);
+            btnAddFriend.setAlpha(0.5f);
+        } else {
+            btnAddFriend.setText("친구 추가");
+            btnAddFriend.setEnabled(true);
+            btnAddFriend.setAlpha(1.0f);
+        }
+        btnAddFriend.setVisibility(android.view.View.VISIBLE);
     }
 
     private void setResultAndFinish() {

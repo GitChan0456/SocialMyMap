@@ -10,8 +10,10 @@ import com.google.android.material.textfield.TextInputEditText;
 public class SignupActivity extends AppCompatActivity {
 
     private TextInputEditText etUserId, etPassword, etPasswordConfirm, etNickname, etEmail;
-    private Button btnSignup;
+    private Button btnSignup, btnCheckUserId, btnCheckNickname;
     private ImageButton btnBack;
+    private boolean isUserIdChecked = false;
+    private boolean isNicknameChecked = false;
     private UserDao userDao;
 
     @Override
@@ -30,11 +32,77 @@ public class SignupActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.et_signup_password);
         etPasswordConfirm = findViewById(R.id.et_signup_password_confirm);
         etNickname = findViewById(R.id.et_signup_nickname);
-        etEmail = findViewById(R.id.et_signup_email); // email 필드 추가
+        etEmail = findViewById(R.id.et_signup_email);
         btnSignup = findViewById(R.id.btn_signup_submit);
+        btnCheckUserId = findViewById(R.id.btn_check_userid);
+        btnCheckNickname = findViewById(R.id.btn_check_nickname);
         btnBack = findViewById(R.id.btn_back);
 
         btnBack.setOnClickListener(v -> finish());
+
+        // 아이디 입력 변경 시 중복확인 상태 초기화
+        etUserId.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                isUserIdChecked = false;
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+
+        // 닉네임 입력 변경 시 중복확인 상태 초기화
+        etNickname.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                isNicknameChecked = false;
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+
+        // 아이디 중복확인 버튼
+        btnCheckUserId.setOnClickListener(v -> {
+            String userId = etUserId.getText().toString();
+            if (userId.isEmpty()) {
+                Toast.makeText(this, "아이디를 입력해주세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (userDao.isUserIdExists(userId)) {
+                Toast.makeText(this, "이미 사용 중인 아이디입니다.", Toast.LENGTH_SHORT).show();
+                isUserIdChecked = false;
+            } else {
+                Toast.makeText(this, "사용 가능한 아이디입니다.", Toast.LENGTH_SHORT).show();
+                isUserIdChecked = true;
+            }
+        });
+
+        // 닉네임 중복확인 버튼
+        btnCheckNickname.setOnClickListener(v -> {
+            String nickname = etNickname.getText().toString();
+            if (nickname.isEmpty()) {
+                Toast.makeText(this, "닉네임을 입력해주세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (userDao.isNicknameExists(nickname)) {
+                Toast.makeText(this, "이미 사용 중인 닉네임입니다.", Toast.LENGTH_SHORT).show();
+                isNicknameChecked = false;
+            } else {
+                Toast.makeText(this, "사용 가능한 닉네임입니다.", Toast.LENGTH_SHORT).show();
+                isNicknameChecked = true;
+            }
+        });
 
         btnSignup.setOnClickListener(v -> {
             String userId = etUserId.getText().toString();
@@ -49,8 +117,25 @@ public class SignupActivity extends AppCompatActivity {
                 return;
             }
 
+            // 중복확인 체크
+            if (!isUserIdChecked) {
+                Toast.makeText(this, "아이디 중복확인을 해주세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (!isNicknameChecked) {
+                Toast.makeText(this, "닉네임 중복확인을 해주세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if (!password.equals(passwordConfirm)) {
                 Toast.makeText(this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 닉네임 중복 체크
+            if (userDao.isNicknameExists(nickname)) {
+                Toast.makeText(this, "이미 사용 중인 닉네임입니다.", Toast.LENGTH_SHORT).show();
                 return;
             }
 

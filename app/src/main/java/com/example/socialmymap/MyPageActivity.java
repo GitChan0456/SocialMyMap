@@ -49,6 +49,12 @@ public class MyPageActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        TextView tvFriendManagement = findViewById(R.id.tv_friend_management);
+        tvFriendManagement.setOnClickListener(v -> {
+            Intent intent = new Intent(MyPageActivity.this, FriendsActivity.class);
+            startActivity(intent);
+        });
+
         tvLogout.setOnClickListener(v -> {
             SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();

@@ -33,9 +33,9 @@ public class UserDao {
     }
 
     public boolean loginUser(String userId, String password) {
-        String[] columns = {UserDBHelper.COLUMN_ID};
+        String[] columns = { UserDBHelper.COLUMN_ID };
         String selection = UserDBHelper.COLUMN_USER_ID + " = ?" + " AND " + UserDBHelper.COLUMN_PASSWORD + " = ?";
-        String[] selectionArgs = {userId, password};
+        String[] selectionArgs = { userId, password };
 
         Cursor cursor = db.query(UserDBHelper.TABLE_USERS, columns, selection, selectionArgs, null, null, null);
         int count = cursor.getCount();
@@ -44,9 +44,9 @@ public class UserDao {
     }
 
     public UserData getUserData(String userId) {
-        String[] columns = {UserDBHelper.COLUMN_NICKNAME, UserDBHelper.COLUMN_EMAIL};
+        String[] columns = { UserDBHelper.COLUMN_NICKNAME, UserDBHelper.COLUMN_EMAIL };
         String selection = UserDBHelper.COLUMN_USER_ID + " = ?";
-        String[] selectionArgs = {userId};
+        String[] selectionArgs = { userId };
 
         Cursor cursor = db.query(UserDBHelper.TABLE_USERS, columns, selection, selectionArgs, null, null, null);
         UserData userData = null;
@@ -61,7 +61,7 @@ public class UserDao {
 
     public void deleteUser(String userId) {
         String selection = UserDBHelper.COLUMN_USER_ID + " = ?";
-        String[] selectionArgs = {userId};
+        String[] selectionArgs = { userId };
         db.delete(UserDBHelper.TABLE_USERS, selection, selectionArgs);
     }
 
@@ -76,9 +76,33 @@ public class UserDao {
         }
 
         String selection = UserDBHelper.COLUMN_USER_ID + " = ?";
-        String[] selectionArgs = {userId};
+        String[] selectionArgs = { userId };
 
         return db.update(UserDBHelper.TABLE_USERS, values, selection, selectionArgs);
+    }
+
+    // 아이디 중복 체크
+    public boolean isUserIdExists(String userId) {
+        String[] columns = { UserDBHelper.COLUMN_ID };
+        String selection = UserDBHelper.COLUMN_USER_ID + " = ?";
+        String[] selectionArgs = { userId };
+
+        Cursor cursor = db.query(UserDBHelper.TABLE_USERS, columns, selection, selectionArgs, null, null, null);
+        int count = cursor.getCount();
+        cursor.close();
+        return count > 0;
+    }
+
+    // 닉네임 중복 체크
+    public boolean isNicknameExists(String nickname) {
+        String[] columns = { UserDBHelper.COLUMN_ID };
+        String selection = UserDBHelper.COLUMN_NICKNAME + " = ?";
+        String[] selectionArgs = { nickname };
+
+        Cursor cursor = db.query(UserDBHelper.TABLE_USERS, columns, selection, selectionArgs, null, null, null);
+        int count = cursor.getCount();
+        cursor.close();
+        return count > 0;
     }
 }
 
