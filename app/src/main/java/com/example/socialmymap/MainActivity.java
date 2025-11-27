@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -138,9 +139,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private TextView tvRouteOption;
     private ImageView btnCancelRoute;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 야간 모드 설정 로드 및 적용
+        SharedPreferences appSettings = getSharedPreferences("app_settings", MODE_PRIVATE);
+        boolean isDarkMode = appSettings.getBoolean("dark_mode", false);
+        if (isDarkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -181,7 +190,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-
         // FAB
         fabCurrentLocation = findViewById(R.id.fab_current_location);
         fabCurrentLocation.setOnClickListener(v -> moveToCurrentLocation());
@@ -198,8 +206,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     fabCurrentLocation.hide();
                 }
             }
+
             @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+            }
         });
         tvBusStopName = busBottomSheet.findViewById(R.id.tv_bus_stop_name);
         tvBusStopInfo = busBottomSheet.findViewById(R.id.tv_bus_stop_info);
@@ -219,8 +229,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     fabCurrentLocation.hide();
                 }
             }
+
             @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+            }
         });
         tvPlaceName = placeBottomSheet.findViewById(R.id.tv_place_name);
         tvPlaceCategory = placeBottomSheet.findViewById(R.id.tv_place_category);
@@ -244,8 +256,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     fabCurrentLocation.hide();
                 }
             }
+
             @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+            }
         });
 
         LinearLayout btnNav = mainMenuBottomSheet.findViewById(R.id.btn_feature_1);
@@ -300,7 +314,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnCancelRoute = routeInfoPanel.findViewById(R.id.btn_cancel_route);
         btnCancelRoute.setOnClickListener(v -> clearRouteAndPanel());
 
-
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int halfScreenHeight = displayMetrics.heightPixels / 2;
@@ -349,7 +362,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         carOptions.add("최소시간");
         carOptions.add("최적경로");
         carOptions.add("무료도로");
-        ArrayAdapter<String> carOptionsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, carOptions);
+        ArrayAdapter<String> carOptionsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
+                carOptions);
         carOptionsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spCarOptions.setAdapter(carOptionsAdapter);
         spCarOptions.setSelection(1); // 기본: 최적경로
@@ -376,7 +390,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             runOnUiThread(() -> Toast.makeText(this, "출발지 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show());
                             return;
                         }
-                        startPoint = new LatLng(startAddresses.get(0).getLatitude(), startAddresses.get(0).getLongitude());
+                        startPoint = new LatLng(startAddresses.get(0).getLatitude(),
+                                startAddresses.get(0).getLongitude());
                     }
 
                     List<Address> endAddresses = geocoder.getFromLocationName(endLocationName, 1);
@@ -454,7 +469,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }).start();
     }
 
-
     @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
         this.naverMap = naverMap;
@@ -497,7 +511,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             if (!longClickMarkers.isEmpty()) {
-                for(Marker marker : longClickMarkers) {
+                for (Marker marker : longClickMarkers) {
                     marker.setMap(null);
                 }
                 longClickMarkers.clear();
@@ -525,7 +539,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             Marker newMarker = new Marker();
             newMarker.setPosition(coord);
-            newMarker.setIcon(OverlayImage.fromResource(com.naver.maps.map.R.drawable.navermap_default_marker_icon_blue));
+            newMarker.setIcon(
+                    OverlayImage.fromResource(com.naver.maps.map.R.drawable.navermap_default_marker_icon_blue));
             newMarker.setMap(naverMap);
             longClickMarkers.add(newMarker);
 
@@ -539,7 +554,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         runOnUiThread(() -> {
                             newMarker.setOnClickListener(overlay -> {
                                 Address clickedAddress = (Address) overlay.getTag();
-                                String placeName = clickedAddress.getFeatureName() != null ? clickedAddress.getFeatureName() : "이름 없는 장소";
+                                String placeName = clickedAddress.getFeatureName() != null
+                                        ? clickedAddress.getFeatureName()
+                                        : "이름 없는 장소";
                                 showPlaceInfo(placeName, clickedAddress.getAddressLine(0), "선택한 위치", coord);
                                 return true;
                             });
@@ -643,8 +660,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     name,
                     address,
                     destination != null ? destination.latitude : null,
-                    destination != null ? destination.longitude : null
-            );
+                    destination != null ? destination.longitude : null);
             favoritesDao.close();
 
             if (inserted == -1) {
@@ -657,9 +673,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
-
     private void searchNearbyPlaces(String category) {
-        if (naverMap == null) return;
+        if (naverMap == null)
+            return;
         LatLng center = naverMap.getCameraPosition().target;
 
         new Thread(() -> {
@@ -676,7 +692,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 String text = URLEncoder.encode(query, "UTF-8");
-                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text + "&display=10&start=1&sort=random";
+                String apiURL = "https://openapi.naver.com/v1/search/local.json?query=" + text
+                        + "&display=10&start=1&sort=random";
 
                 Log.d(TAG, "Request URL: " + apiURL);
 
@@ -711,7 +728,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     runOnUiThread(() -> {
                         clearPlaceMarkers();
                         if (items.length() == 0) {
-                            Toast.makeText(this, "주변에서 '" + category + "' 검색 결과를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "주변에서 '" + category + "' 검색 결과를 찾을 수 없습니다.", Toast.LENGTH_SHORT)
+                                    .show();
                             return;
                         }
 
@@ -731,7 +749,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 Marker marker = new Marker();
                                 marker.setPosition(latLng);
                                 marker.setCaptionText(title);
-                                marker.setIcon(OverlayImage.fromResource(com.naver.maps.map.R.drawable.navermap_default_marker_icon_yellow));
+                                marker.setIcon(OverlayImage.fromResource(
+                                        com.naver.maps.map.R.drawable.navermap_default_marker_icon_yellow));
                                 marker.setMap(naverMap);
 
                                 marker.setOnClickListener(overlay -> {
@@ -857,7 +876,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                     });
                 } else {
-                    runOnUiThread(() -> Toast.makeText(this, "TMAP 경로 탐색 실패: " + responseCode, Toast.LENGTH_SHORT).show());
+                    runOnUiThread(
+                            () -> Toast.makeText(this, "TMAP 경로 탐색 실패: " + responseCode, Toast.LENGTH_SHORT).show());
                 }
 
             } catch (Exception e) {
@@ -969,7 +989,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                     });
                 } else {
-                    runOnUiThread(() -> Toast.makeText(this, "TMAP 자동차 경로 탐색 실패: " + responseCode, Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> Toast.makeText(this, "TMAP 자동차 경로 탐색 실패: " + responseCode, Toast.LENGTH_SHORT)
+                            .show());
                 }
 
             } catch (Exception e) {
@@ -1030,7 +1051,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void setRouteDestinationMarker(LatLng end, String title) {
-        if (naverMap == null || end == null) return;
+        if (naverMap == null || end == null)
+            return;
         Runnable task = () -> {
             if (routeDestinationMarker != null) {
                 routeDestinationMarker.setMap(null);
@@ -1056,7 +1078,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-
     private void clearPlaceMarkers() {
         for (Marker marker : placeMarkers) {
             marker.setMap(null);
@@ -1065,9 +1086,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void checkLocationPermission() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION }, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
             startLocationUpdates();
         }
@@ -1093,12 +1117,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         };
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
     }
-
 
     private void moveToCurrentLocation() {
         if (locationOverlay.getPosition() != null) {
@@ -1112,7 +1138,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         new Thread(() -> {
             List<BusStop> busStops = new ArrayList<>();
             try {
-                StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusSttnInfoInqireService/getCrdntPrxmtSttnList");
+                StringBuilder urlBuilder = new StringBuilder(
+                        "http://apis.data.go.kr/1613000/BusSttnInfoInqireService/getCrdntPrxmtSttnList");
                 urlBuilder.append("?serviceKey=").append(serviceKey);
                 urlBuilder.append("&pageNo=").append("1");
                 urlBuilder.append("&numOfRows=").append("20");
@@ -1195,7 +1222,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void showBusArrivalInfo(BusStop busStop) {
-        if (busStop == null || busStop.getCityCode() == null) return;
+        if (busStop == null || busStop.getCityCode() == null)
+            return;
 
         placeInfoSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
@@ -1215,7 +1243,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<BusArrival> fetchBusArrivalsApi(String nodeId, String cityCode) {
         List<BusArrival> resultList = new ArrayList<>();
         try {
-            StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList");
+            StringBuilder urlBuilder = new StringBuilder(
+                    "http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList");
             urlBuilder.append("?serviceKey=").append(serviceKey);
             urlBuilder.append("&cityCode=").append(cityCode);
             urlBuilder.append("&nodeId=").append(nodeId);
@@ -1361,7 +1390,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -1403,33 +1433,92 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    protected void onStart() { super.onStart(); mapView.onStart(); }
+    protected void onStart() {
+        super.onStart();
+        mapView.onStart();
+    }
+
     @Override
-    protected void onResume() { super.onResume(); if (locationCallback != null) startLocationUpdates(); }
+    protected void onResume() {
+        super.onResume();
+        if (locationCallback != null)
+            startLocationUpdates();
+    }
+
     @Override
-    protected void onPause() { super.onPause(); if (fusedLocationClient != null && locationCallback != null) fusedLocationClient.removeLocationUpdates(locationCallback); }
+    protected void onPause() {
+        super.onPause();
+        if (fusedLocationClient != null && locationCallback != null)
+            fusedLocationClient.removeLocationUpdates(locationCallback);
+    }
+
     @Override
-    protected void onStop() { super.onStop(); mapView.onStop(); }
+    protected void onStop() {
+        super.onStop();
+        mapView.onStop();
+    }
+
     @Override
-    protected void onDestroy() { super.onDestroy(); mapView.onDestroy(); }
+    protected void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+    }
+
     @Override
-    public void onLowMemory() { super.onLowMemory(); mapView.onLowMemory(); }
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
     @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) { super.onSaveInstanceState(outState); mapView.onSaveInstanceState(outState); }
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapView.onSaveInstanceState(outState);
+    }
 
     class BusStop {
         private double lat, lon;
         private String name, nodeId, cityCode;
-        public double getLat() { return lat; }
-        public void setLat(double lat) { this.lat = lat; }
-        public double getLon() { return lon; }
-        public void setLon(double lon) { this.lon = lon; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getNodeId() { return nodeId; }
-        public void setNodeId(String nodeId) { this.nodeId = nodeId; }
-        public String getCityCode() { return cityCode; }
-        public void setCityCode(String cityCode) { this.cityCode = cityCode; }
+
+        public double getLat() {
+            return lat;
+        }
+
+        public void setLat(double lat) {
+            this.lat = lat;
+        }
+
+        public double getLon() {
+            return lon;
+        }
+
+        public void setLon(double lon) {
+            this.lon = lon;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getNodeId() {
+            return nodeId;
+        }
+
+        public void setNodeId(String nodeId) {
+            this.nodeId = nodeId;
+        }
+
+        public String getCityCode() {
+            return cityCode;
+        }
+
+        public void setCityCode(String cityCode) {
+            this.cityCode = cityCode;
+        }
     }
 
     class BusArrival {
@@ -1437,11 +1526,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         private String routeType;
         private List<Integer> arrTimes = new ArrayList<>();
 
-        public String getRouteNo() { return routeNo; }
-        public void setRouteNo(String routeNo) { this.routeNo = routeNo; }
-        public String getRouteType() { return routeType; }
-        public void setRouteType(String routeType) { this.routeType = routeType; }
-        public List<Integer> getArrTimes() { return arrTimes; }
-        public void addArrTime(int time) { this.arrTimes.add(time); }
+        public String getRouteNo() {
+            return routeNo;
+        }
+
+        public void setRouteNo(String routeNo) {
+            this.routeNo = routeNo;
+        }
+
+        public String getRouteType() {
+            return routeType;
+        }
+
+        public void setRouteType(String routeType) {
+            this.routeType = routeType;
+        }
+
+        public List<Integer> getArrTimes() {
+            return arrTimes;
+        }
+
+        public void addArrTime(int time) {
+            this.arrTimes.add(time);
+        }
     }
 }

@@ -27,9 +27,12 @@
             android:text="푸시 알림 받기"
             android:textSize="18sp"/>
         <Switch
+            android:id="@+id/switch_push_notification"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"/>
+            android:checked="false"
+            android:enabled="false"
+            android:alpha="0.5"/>
     </LinearLayout>
 
     <LinearLayout
@@ -46,6 +49,7 @@
             android:text="야간 모드"
             android:textSize="18sp"/>
         <Switch
+            android:id="@+id/switch_dark_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
     </LinearLayout>
