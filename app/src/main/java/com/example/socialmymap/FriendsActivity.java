@@ -43,18 +43,25 @@ public class FriendsActivity extends AppCompatActivity {
         friendsDao = new FriendsDao(this);
         friendsDao.open();
 
-        adapter = new FriendsAdapter(friendList, (friend, position) -> {
-            // 친구 삭제
-            boolean success = friendsDao.deleteFriend(friend.id);
-            if (success) {
-                friendList.remove(position);
-                adapter.notifyItemRemoved(position);
-                Toast.makeText(this, "친구가 삭제되었습니다.", Toast.LENGTH_SHORT).show();
-                updateEmptyView();
-            } else {
-                Toast.makeText(this, "삭제 실패", Toast.LENGTH_SHORT).show();
-            }
-        });
+        adapter = new FriendsAdapter(friendList,
+                (friend, position) -> {
+                    // 친구 삭제
+                    boolean success = friendsDao.deleteFriend(friend.id);
+                    if (success) {
+                        friendList.remove(position);
+                        adapter.notifyItemRemoved(position);
+                        Toast.makeText(this, "친구가 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+                        updateEmptyView();
+                    } else {
+                        Toast.makeText(this, "삭제 실패", Toast.LENGTH_SHORT).show();
+                    }
+                },
+                (friend) -> {
+                    // 채팅 시작
+                    android.content.Intent intent = new android.content.Intent(this, ChatRoomActivity.class);
+                    intent.putExtra("friend_name", friend.friendNickname);
+                    startActivity(intent);
+                });
 
         rvFriends.setAdapter(adapter);
         rvFriends.setLayoutManager(new LinearLayoutManager(this));

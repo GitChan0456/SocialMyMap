@@ -19,14 +19,21 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
     private final List<Friend> friendList;
     private final OnFriendDeleteListener deleteListener;
+    private final OnFriendChatListener chatListener;
 
     public interface OnFriendDeleteListener {
         void onFriendDelete(Friend friend, int position);
     }
 
-    public FriendsAdapter(List<Friend> friendList, OnFriendDeleteListener deleteListener) {
+    public interface OnFriendChatListener {
+        void onFriendChat(Friend friend);
+    }
+
+    public FriendsAdapter(List<Friend> friendList, OnFriendDeleteListener deleteListener,
+            OnFriendChatListener chatListener) {
         this.friendList = friendList;
         this.deleteListener = deleteListener;
+        this.chatListener = chatListener;
     }
 
     @NonNull
@@ -59,6 +66,12 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
                     .setNegativeButton("취소", null)
                     .show();
         });
+
+        holder.btnChat.setOnClickListener(v -> {
+            if (chatListener != null) {
+                chatListener.onFriendChat(friend);
+            }
+        });
     }
 
     @Override
@@ -68,13 +81,14 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvNickname, tvDate;
-        Button btnDelete;
+        Button btnDelete, btnChat;
 
         public ViewHolder(View itemView) {
             super(itemView);
             tvNickname = itemView.findViewById(R.id.tv_friend_nickname);
             tvDate = itemView.findViewById(R.id.tv_friend_date);
             btnDelete = itemView.findViewById(R.id.btn_delete_friend);
+            btnChat = itemView.findViewById(R.id.btn_chat_friend);
         }
     }
 }

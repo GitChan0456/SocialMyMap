@@ -38,6 +38,16 @@
     </LinearLayout>
 
     <Button
+        android:id="@+id/btn_chat_friend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="채팅"
+        android:textColor="#2196F3"
+        android:background="?attr/selectableItemBackground"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="8dp"/>
+
+    <Button
         android:id="@+id/btn_delete_friend"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
