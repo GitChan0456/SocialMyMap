@@ -40,11 +40,13 @@ public class CommunityActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 switch (position) {
-                    case 0:
+                    case 0: // 게시판 탭
                         bottomNav.getMenu().findItem(R.id.nav_board).setChecked(true);
+                        fabWritePost.show(); // FAB 보이기
                         break;
-                    case 1:
+                    case 1: // 채팅 탭
                         bottomNav.getMenu().findItem(R.id.nav_chat).setChecked(true);
+                        fabWritePost.hide(); // FAB 숨기기
                         break;
                 }
             }
@@ -61,10 +63,11 @@ public class CommunityActivity extends AppCompatActivity {
             }
             return false;
         });
-        
+
         fabWritePost.setOnClickListener(v -> {
             Intent intent = new Intent(this, WritePostActivity.class);
-            // BoardFragment의 onActivityResult를 호출하기 위해 Fragment를 통해 startActivityForResult 호출
+            // BoardFragment의 onActivityResult를 호출하기 위해 Fragment를 통해 startActivityForResult
+            // 호출
             getSupportFragmentManager().getFragments().get(0).startActivityForResult(intent, REQUEST_CODE_WRITE_POST);
         });
     }
