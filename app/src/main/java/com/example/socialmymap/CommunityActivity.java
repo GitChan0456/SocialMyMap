@@ -48,6 +48,10 @@ public class CommunityActivity extends AppCompatActivity {
                         bottomNav.getMenu().findItem(R.id.nav_chat).setChecked(true);
                         fabWritePost.hide(); // FAB 숨기기
                         break;
+                    case 2: // 친구 탭
+                        bottomNav.getMenu().findItem(R.id.nav_friends).setChecked(true);
+                        fabWritePost.hide(); // FAB 숨기기
+                        break;
                 }
             }
         });
@@ -59,6 +63,9 @@ public class CommunityActivity extends AppCompatActivity {
                 return true;
             } else if (item.getItemId() == R.id.nav_chat) {
                 viewPager.setCurrentItem(1);
+                return true;
+            } else if (item.getItemId() == R.id.nav_friends) {
+                viewPager.setCurrentItem(2);
                 return true;
             }
             return false;

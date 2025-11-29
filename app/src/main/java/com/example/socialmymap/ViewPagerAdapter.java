@@ -19,6 +19,8 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
                 return new BoardFragment();
             case 1:
                 return new ChatFragment();
+            case 2:
+                return new FriendsFragment();
             default:
                 return new BoardFragment();
         }
@@ -26,6 +28,6 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
 
     @Override
     public int getItemCount() {
-        return 2; // 게시판, 채팅 2개의 탭
+        return 3; // 게시판, 채팅, 친구 3개의 탭
     }
 }
