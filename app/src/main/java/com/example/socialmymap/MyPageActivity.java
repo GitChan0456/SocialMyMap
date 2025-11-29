@@ -17,7 +17,9 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MyPageActivity extends AppCompatActivity {
 
     private UserDao userDao;
-    private TextView tvNickname, tvUserEmail; // 멤버 변수로 선언
+    private CommunityDao communityDao;
+    private TextView tvNickname, tvUserEmail;
+    private TextView tvMyPostsCount, tvMyCommentsCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,13 +33,30 @@ public class MyPageActivity extends AppCompatActivity {
 
         userDao = new UserDao(this);
         userDao.open();
+        communityDao = new CommunityDao(this);
 
-        tvNickname = findViewById(R.id.tv_nickname); // 여기서 초기화
-        tvUserEmail = findViewById(R.id.tv_user_email); // 여기서 초기화
+        tvNickname = findViewById(R.id.tv_nickname);
+        tvUserEmail = findViewById(R.id.tv_user_email);
+        tvMyPostsCount = findViewById(R.id.tv_my_posts_count);
+        tvMyCommentsCount = findViewById(R.id.tv_my_comments_count);
         TextView tvProfileEdit = findViewById(R.id.tv_profile_edit);
         TextView tvMyPosts = findViewById(R.id.tv_my_posts);
         TextView tvLogout = findViewById(R.id.tv_logout);
         TextView tvDeleteAccount = findViewById(R.id.tv_delete_account);
+
+        // 내가 쓴 글/댓글 클릭 리스너
+        View layoutMyPosts = findViewById(R.id.layout_my_posts);
+        View layoutMyComments = findViewById(R.id.layout_my_comments);
+
+        layoutMyPosts.setOnClickListener(v -> {
+            Intent intent = new Intent(MyPageActivity.this, MyPostsActivity.class);
+            startActivity(intent);
+        });
+
+        layoutMyComments.setOnClickListener(v -> {
+            Intent intent = new Intent(MyPageActivity.this, MyCommentsActivity.class);
+            startActivity(intent);
+        });
 
         tvProfileEdit.setOnClickListener(v -> {
             Intent intent = new Intent(MyPageActivity.this, ProfileEditActivity.class);
@@ -104,6 +123,7 @@ public class MyPageActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String nickname = prefs.getString("user_nickname", "사용자");
         String email = prefs.getString("user_email", null);
+        String userId = prefs.getString("user_id", null);
 
         tvNickname.setText(nickname);
 
@@ -111,6 +131,14 @@ public class MyPageActivity extends AppCompatActivity {
             tvUserEmail.setText("이메일 정보를 입력해주세요.");
         } else {
             tvUserEmail.setText(email);
+        }
+
+        // 게시글/댓글 개수 로드
+        if (userId != null) {
+            int postsCount = communityDao.countPostsByAuthor(userId, nickname);
+            int commentsCount = communityDao.countCommentsByAuthor(userId, nickname);
+            tvMyPostsCount.setText(String.valueOf(postsCount));
+            tvMyCommentsCount.setText(String.valueOf(commentsCount));
         }
     }
 

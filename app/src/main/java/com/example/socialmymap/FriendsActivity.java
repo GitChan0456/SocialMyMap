@@ -59,6 +59,7 @@ public class FriendsActivity extends AppCompatActivity {
                 (friend) -> {
                     // 채팅 시작
                     android.content.Intent intent = new android.content.Intent(this, ChatRoomActivity.class);
+                    intent.putExtra("friend_user_id", friend.friendUserId);
                     intent.putExtra("friend_name", friend.friendNickname);
                     startActivity(intent);
                 });
