@@ -13,4 +13,9 @@
     <color name="blue_700">#1976D2</color>
     <color name="blue_200">#90CAF9</color>
     <color name="dark_blue">#00008B</color>
+    
+    <!-- Adaptive Colors (Light Mode) -->
+    <color name="surface_color">#FFFFFF</color>
+    <color name="text_primary">#000000</color>
+    <color name="text_secondary">#666666</color>
 </resources>
