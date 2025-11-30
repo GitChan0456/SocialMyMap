@@ -27,8 +27,7 @@ public class CommunityDBHelper extends SQLiteOpenHelper {
                         "timestamp TEXT NOT NULL," +
                         "views INTEGER DEFAULT 0," +
                         "comment_count INTEGER DEFAULT 0" +
-                        ")"
-        );
+                        ")");
 
         db.execSQL(
                 "CREATE TABLE " + TABLE_COMMENTS + " (" +
@@ -39,8 +38,7 @@ public class CommunityDBHelper extends SQLiteOpenHelper {
                         "content TEXT NOT NULL," +
                         "timestamp TEXT NOT NULL," +
                         "FOREIGN KEY(post_id) REFERENCES " + TABLE_POSTS + "(id) ON DELETE CASCADE" +
-                        ")"
-        );
+                        ")");
     }
 
     @Override

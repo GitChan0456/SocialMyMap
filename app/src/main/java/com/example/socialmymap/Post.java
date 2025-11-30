@@ -15,7 +15,8 @@ public class Post implements Serializable {
     public Post() {
     }
 
-    public Post(long id, String authorId, String title, String content, String author, String timestamp, int views, int commentCount) {
+    public Post(long id, String authorId, String title, String content, String author, String timestamp, int views,
+            int commentCount) {
         this.id = id;
         this.authorId = authorId;
         this.title = title;
