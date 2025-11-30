@@ -49,12 +49,24 @@ public class MyPageActivity extends AppCompatActivity {
         View layoutMyComments = findViewById(R.id.layout_my_comments);
 
         layoutMyPosts.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            String userId = prefs.getString("user_id", null);
+            String nickname = prefs.getString("user_nickname", null);
+
             Intent intent = new Intent(MyPageActivity.this, MyPostsActivity.class);
+            intent.putExtra(MyPostsActivity.EXTRA_AUTHOR_ID, userId);
+            intent.putExtra(MyPostsActivity.EXTRA_AUTHOR_NICK, nickname);
             startActivity(intent);
         });
 
         layoutMyComments.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            String userId = prefs.getString("user_id", null);
+            String nickname = prefs.getString("user_nickname", null);
+
             Intent intent = new Intent(MyPageActivity.this, MyCommentsActivity.class);
+            intent.putExtra(MyCommentsActivity.EXTRA_AUTHOR_ID, userId);
+            intent.putExtra(MyCommentsActivity.EXTRA_AUTHOR_NICK, nickname);
             startActivity(intent);
         });
 

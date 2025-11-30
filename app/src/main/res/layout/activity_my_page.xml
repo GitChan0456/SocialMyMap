@@ -26,6 +26,7 @@
             android:text="사용자 닉네임"
             android:textSize="22sp"
             android:textStyle="bold"
+            android:textColor="@color/text_primary"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="4dp"/>
 
@@ -45,7 +46,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:weightSum="2"
-            android:background="#F8F8F8"
+            android:background="@color/surface_color"
             android:paddingVertical="12dp"
             android:layout_marginBottom="24dp">
             <LinearLayout
@@ -54,18 +55,24 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                android:padding="8dp">
                 <TextView
                     android:id="@+id/tv_my_posts_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0"
                     android:textSize="20sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="내가 쓴 글"/>
+                    android:text="내가 쓴 글"
+                    android:textColor="@color/text_secondary"/>
             </LinearLayout>
             <LinearLayout
                 android:id="@+id/layout_my_comments"
@@ -73,18 +80,24 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                android:padding="8dp">
                 <TextView
                     android:id="@+id/tv_my_comments_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0"
                     android:textSize="20sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="내가 쓴 댓글"/>
+                    android:text="내가 쓴 댓글"
+                    android:textColor="@color/text_secondary"/>
             </LinearLayout>
         </LinearLayout>
 
@@ -95,6 +108,7 @@
             android:layout_height="wrap_content"
             android:text="프로필 수정"
             android:textSize="18sp"
+            android:textColor="@color/text_primary"
             android:padding="16dp"
             android:clickable="true"
             android:focusable="true"
@@ -109,6 +123,7 @@
             android:layout_height="wrap_content"
             android:text="즐겨찾는 장소"
             android:textSize="18sp"
+            android:textColor="@color/text_primary"
             android:padding="16dp"
             android:clickable="true"
             android:focusable="true"
@@ -123,6 +138,7 @@
             android:layout_height="wrap_content"
             android:text="친구 관리"
             android:textSize="18sp"
+            android:textColor="@color/text_primary"
             android:padding="16dp"
             android:clickable="true"
             android:focusable="true"
@@ -137,6 +153,7 @@
             android:layout_height="wrap_content"
             android:text="로그아웃"
             android:textSize="18sp"
+            android:textColor="@color/text_primary"
             android:padding="16dp"
             android:clickable="true"
             android:focusable="true"

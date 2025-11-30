@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="@color/surface_color">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_chat_rooms"
@@ -18,7 +18,7 @@
         android:gravity="center"
         android:text="채팅 내역이 없습니다.\n친구 목록에서 채팅을 시작해보세요!"
         android:textSize="16sp"
-        android:textColor="#999999"
+        android:textColor="@color/text_secondary"
         android:visibility="gone"/>
 
 </LinearLayout>
