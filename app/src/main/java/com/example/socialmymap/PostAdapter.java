@@ -38,6 +38,14 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvViews.setText(String.valueOf(post.views));
         holder.tvComments.setText(String.valueOf(post.commentCount));
 
+        // 지역 정보 표시
+        if (post.region != null && !post.region.isEmpty() && !post.region.equals("미분류")) {
+            holder.tvRegion.setText(post.region);
+            holder.tvRegion.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvRegion.setVisibility(View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(holder.itemView.getContext(), PostDetailActivity.class);
             intent.putExtra("post_id", post.id);
@@ -52,7 +60,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvContent, tvAuthor, tvViews, tvComments;
+        TextView tvTitle, tvContent, tvAuthor, tvViews, tvComments, tvRegion;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -61,6 +69,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             tvAuthor = itemView.findViewById(R.id.tv_post_author);
             tvViews = itemView.findViewById(R.id.tv_post_views);
             tvComments = itemView.findViewById(R.id.tv_post_comments);
+            tvRegion = itemView.findViewById(R.id.tv_post_region);
         }
     }
 }

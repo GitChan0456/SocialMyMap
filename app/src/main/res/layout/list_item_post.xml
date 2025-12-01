@@ -38,6 +38,16 @@
             android:layout_height="wrap_content"
             android:text="작성자"/>
 
+        <TextView
+            android:id="@+id/tv_post_region"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/region_badge_background"
+            android:text="서울 강남구"
+            android:textSize="11sp"
+            android:textColor="#1976D2"/>
+
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"

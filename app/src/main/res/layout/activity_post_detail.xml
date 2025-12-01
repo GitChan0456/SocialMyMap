@@ -103,6 +103,31 @@
                     android:text="0" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/layout_detail_region"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="작성 위치: "
+                    android:textSize="14sp"
+                    android:textColor="#616161"/>
+
+                <TextView
+                    android:id="@+id/tv_detail_region"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/region_badge_background"
+                    android:text="서울 강남구"
+                    android:textSize="13sp"
+                    android:textColor="#1976D2"/>
+            </LinearLayout>
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"

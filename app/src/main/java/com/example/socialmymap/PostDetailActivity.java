@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,6 +39,8 @@ public class PostDetailActivity extends AppCompatActivity {
     private TextView tvContent;
     private TextView tvViews;
     private TextView tvCommentHeader;
+    private TextView tvDetailRegion;
+    private LinearLayout layoutDetailRegion;
     private Button btnAddFriend;
     private FriendsDao friendsDao;
 
@@ -57,6 +60,8 @@ public class PostDetailActivity extends AppCompatActivity {
         tvContent = findViewById(R.id.tv_detail_content);
         tvViews = findViewById(R.id.tv_detail_views);
         tvCommentHeader = findViewById(R.id.tv_detail_comment_header);
+        tvDetailRegion = findViewById(R.id.tv_detail_region);
+        layoutDetailRegion = findViewById(R.id.layout_detail_region);
         btnAddFriend = findViewById(R.id.btn_add_friend);
         RecyclerView rvComments = findViewById(R.id.rv_comments);
         etComment = findViewById(R.id.et_comment);
@@ -168,6 +173,15 @@ public class PostDetailActivity extends AppCompatActivity {
         tvContent.setText(post.content);
         tvTime.setText(post.timestamp);
         tvViews.setText(String.valueOf(post.views));
+        
+        // 지역 정보 표시
+        if (post.region != null && !post.region.isEmpty() && !post.region.equals("미분류")) {
+            tvDetailRegion.setText(post.region);
+            layoutDetailRegion.setVisibility(android.view.View.VISIBLE);
+        } else {
+            layoutDetailRegion.setVisibility(android.view.View.GONE);
+        }
+        
         loadComments();
     }
 
