@@ -106,7 +106,15 @@ public class MyPageActivity extends AppCompatActivity {
                     .setPositiveButton("예", (dialog, which) -> {
                         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
                         String userId = prefs.getString("user_id", null);
+                        String userNickname = prefs.getString("user_nickname", null);
+
                         if (userId != null) {
+                            // 1. 게시글 삭제 및 댓글 익명화
+                            CommunityDao communityDao = new CommunityDao(this);
+                            communityDao.deletePostsByUser(userId, userNickname);
+                            communityDao.anonymizeCommentsByUser(userId, userNickname);
+
+                            // 2. 사용자 계정 삭제
                             userDao.deleteUser(userId);
 
                             SharedPreferences.Editor editor = prefs.edit();

@@ -203,4 +203,29 @@ public class CommunityDao {
         }
         return result;
     }
+
+    /**
+     * 회원 탈퇴 시 해당 사용자의 모든 게시글 삭제
+     */
+    public void deletePostsByUser(String authorId, String authorNickname) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.delete(CommunityDBHelper.TABLE_POSTS,
+                "author_id = ? OR author_nickname = ?",
+                new String[] { authorId, authorNickname });
+    }
+
+    /**
+     * 회원 탈퇴 시 해당 사용자의 모든 댓글을 익명화
+     */
+    public void anonymizeCommentsByUser(String authorId, String authorNickname) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("author_id", "deleted_user");
+        values.put("author_nickname", "(알 수 없음)");
+
+        db.update(CommunityDBHelper.TABLE_COMMENTS,
+                values,
+                "author_id = ? OR author_nickname = ?",
+                new String[] { authorId, authorNickname });
+    }
 }

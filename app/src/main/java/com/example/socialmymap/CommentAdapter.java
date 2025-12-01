@@ -61,8 +61,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         String currentUserId = prefs.getString("user_id", "");
 
-        // 자기 자신인 경우 버튼 숨기기
-        if (currentUserId.equals(comment.authorId)) {
+        // 자기 자신인 경우 또는 탈퇴한 사용자인 경우 버튼 숨기기
+        if (currentUserId.equals(comment.authorId) || "deleted_user".equals(comment.authorId)) {
             holder.btnAddFriend.setVisibility(View.GONE);
         } else if (friendsDao != null && friendsDao.isFriend(currentUserId, comment.authorId)) {
             // 이미 친구인 경우
