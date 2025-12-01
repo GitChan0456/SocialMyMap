@@ -25,11 +25,15 @@ public class CommunityDao {
         values.put("timestamp", post.timestamp);
         values.put("views", post.views);
         values.put("comment_count", post.commentCount);
+        // 위치 정보 추가
+        values.put("region", post.region);
+        values.put("latitude", post.latitude);
+        values.put("longitude", post.longitude);
         return db.insert(CommunityDBHelper.TABLE_POSTS, null, values);
     }
 
     private Post cursorToPost(Cursor cursor) {
-        return new Post(
+        Post post = new Post(
                 cursor.getLong(cursor.getColumnIndexOrThrow("id")),
                 cursor.getString(cursor.getColumnIndexOrThrow("author_id")),
                 cursor.getString(cursor.getColumnIndexOrThrow("title")),
@@ -38,6 +42,20 @@ public class CommunityDao {
                 cursor.getString(cursor.getColumnIndexOrThrow("timestamp")),
                 cursor.getInt(cursor.getColumnIndexOrThrow("views")),
                 cursor.getInt(cursor.getColumnIndexOrThrow("comment_count")));
+
+        // 위치 정보 읽기 (null-safe)
+        int regionIndex = cursor.getColumnIndex("region");
+        int latIndex = cursor.getColumnIndex("latitude");
+        int lngIndex = cursor.getColumnIndex("longitude");
+
+        if (regionIndex >= 0)
+            post.region = cursor.getString(regionIndex);
+        if (latIndex >= 0)
+            post.latitude = cursor.getDouble(latIndex);
+        if (lngIndex >= 0)
+            post.longitude = cursor.getDouble(lngIndex);
+
+        return post;
     }
 
     public List<Post> getAllPosts() {
@@ -197,6 +215,29 @@ public class CommunityDao {
                         cursor.getString(cursor.getColumnIndexOrThrow("content")),
                         cursor.getString(cursor.getColumnIndexOrThrow("timestamp")));
                 result.add(item);
+            }
+        } finally {
+            cursor.close();
+        }
+        return result;
+    }
+
+    /**
+     * 지역별 게시글 조회 (위치 기반 필터링)
+     */
+    public List<Post> getPostsByRegion(String region) {
+        List<Post> result = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(CommunityDBHelper.TABLE_POSTS,
+                null,
+                "region = ?",
+                new String[] { region },
+                null,
+                null,
+                "id DESC");
+        try {
+            while (cursor.moveToNext()) {
+                result.add(cursorToPost(cursor));
             }
         } finally {
             cursor.close();

@@ -1,57 +1,131 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="설정"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp"/>
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:orientation="vertical"
+        android:padding="16dp">
+
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="푸시 알림 받기"
-            android:textSize="18sp"/>
-        <Switch
-            android:id="@+id/switch_push_notification"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="false"
-            android:enabled="false"
-            android:alpha="0.5"/>
-    </LinearLayout>
+            android:text="설정"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        <!-- 위치 설정 섹션 -->
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="야간 모드"
-            android:textSize="18sp"/>
-        <Switch
-            android:id="@+id/switch_dark_mode"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:text="📍 위치 설정"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
 
-</LinearLayout>
+        <LinearLayout
+            android:id="@+id/layout_home_region"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="우리 동네"
+                android:textSize="16sp"/>
+
+            <TextView
+                android:id="@+id/tv_home_region"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="설정되지 않음"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 화면 설정 섹션 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎨 화면 설정"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="야간 모드"
+                android:textSize="16sp"/>
+            <Switch
+                android:id="@+id/switch_dark_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 알림 설정 섹션 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔔 알림 설정"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="푸시 알림 받기"
+                android:textSize="16sp"/>
+            <Switch
+                android:id="@+id/switch_push_notification"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:enabled="false"
+                android:alpha="0.5"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

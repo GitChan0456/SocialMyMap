@@ -12,6 +12,11 @@ public class Post implements Serializable {
     public int views;
     public int commentCount;
 
+    // 위치 정보 필드
+    public String region = "미분류";
+    public double latitude = 0;
+    public double longitude = 0;
+
     public Post() {
     }
 

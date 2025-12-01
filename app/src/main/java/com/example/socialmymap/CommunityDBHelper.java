@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class CommunityDBHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "community.db";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
 
     public static final String TABLE_POSTS = "posts";
     public static final String TABLE_COMMENTS = "comments";
@@ -26,7 +26,10 @@ public class CommunityDBHelper extends SQLiteOpenHelper {
                         "content TEXT NOT NULL," +
                         "timestamp TEXT NOT NULL," +
                         "views INTEGER DEFAULT 0," +
-                        "comment_count INTEGER DEFAULT 0" +
+                        "comment_count INTEGER DEFAULT 0," +
+                        "region TEXT," +
+                        "latitude REAL," +
+                        "longitude REAL" +
                         ")");
 
         db.execSQL(
@@ -47,6 +50,16 @@ public class CommunityDBHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_COMMENTS);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_POSTS);
             onCreate(db);
+        }
+
+        if (oldVersion < 3) {
+            // 버전 3: 위치 정보 컬럼 추가
+            db.execSQL("ALTER TABLE " + TABLE_POSTS + " ADD COLUMN region TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_POSTS + " ADD COLUMN latitude REAL");
+            db.execSQL("ALTER TABLE " + TABLE_POSTS + " ADD COLUMN longitude REAL");
+
+            // 기존 게시글은 기본값으로 설정
+            db.execSQL("UPDATE " + TABLE_POSTS + " SET region = '미분류', latitude = 0, longitude = 0");
         }
     }
 }
