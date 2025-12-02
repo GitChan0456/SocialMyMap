@@ -41,7 +41,7 @@ public class BoardFragment extends Fragment {
     private LocationHelper locationHelper;
     private Spinner spinnerFilter;
 
-    private String currentFilterMode = "전체";
+    private String currentFilterMode = "우리 지역";
     private Location currentLocation;
 
     @Nullable
@@ -60,7 +60,7 @@ public class BoardFragment extends Fragment {
 
         // 지역 필터 Spinner 설정
         spinnerFilter = view.findViewById(R.id.spinner_region_filter);
-        String[] filterOptions = { "전체", "우리 동네", "현재 위치", "주변 5km" };
+        String[] filterOptions = { "우리 지역", "현재 지역", "우리 동네", "현재 위치", "주변 5km" };
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_item, filterOptions);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -84,8 +84,11 @@ public class BoardFragment extends Fragment {
 
     private void loadPostsWithFilter() {
         switch (currentFilterMode) {
-            case "전체":
-                loadAllPosts();
+            case "우리 지역":
+                loadHomeCityPosts();
+                break;
+            case "현재 지역":
+                loadCurrentCityPosts();
                 break;
             case "우리 동네":
                 loadHomeRegionPosts();
@@ -99,10 +102,89 @@ public class BoardFragment extends Fragment {
         }
     }
 
-    private void loadAllPosts() {
-        posts.clear();
-        posts.addAll(communityDao.getAllPosts());
-        adapter.notifyDataSetChanged();
+    private void loadHomeCityPosts() {
+        // 설정된 우리 동네에서 시 정보 추출
+        SharedPreferences prefs = requireActivity().getSharedPreferences("user_prefs", requireActivity().MODE_PRIVATE);
+        String homeRegion = prefs.getString("home_region", null);
+
+        if (homeRegion == null || homeRegion.isEmpty()) {
+            Toast.makeText(requireContext(), "설정에서 우리 동네를 먼저 설정해주세요", Toast.LENGTH_SHORT).show();
+            spinnerFilter.setSelection(1); // 현재 지역으로 변경
+            return;
+        }
+
+        // 우리 동네에서 시 추출
+        String cityName = extractCityFromRegion(homeRegion);
+        
+        if (cityName != null && !cityName.isEmpty()) {
+            posts.clear();
+            posts.addAll(communityDao.getPostsByCity(cityName));
+            adapter.notifyDataSetChanged();
+        } else {
+            Toast.makeText(requireContext(), "지역 정보를 가져올 수 없습니다", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void loadCurrentCityPosts() {
+        // 현재 위치 가져오기
+        if (ActivityCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
+                    LOCATION_PERMISSION_REQUEST);
+            return;
+        }
+
+        Task<Location> locationTask = locationHelper.getCurrentLocation();
+        if (locationTask != null) {
+            locationTask.addOnSuccessListener(location -> {
+                if (location != null) {
+                    new Thread(() -> {
+                        String fullRegion = locationHelper.getRegionFromLocation(
+                                location.getLatitude(), location.getLongitude());
+                        
+                        // locality(시) 부분만 추출
+                        String cityName = extractCityFromRegion(fullRegion);
+                        
+                        requireActivity().runOnUiThread(() -> {
+                            if (cityName != null && !cityName.isEmpty()) {
+                                posts.clear();
+                                posts.addAll(communityDao.getPostsByCity(cityName));
+                                adapter.notifyDataSetChanged();
+                            } else {
+                                Toast.makeText(requireContext(), "지역 정보를 가져올 수 없습니다", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }).start();
+                } else {
+                    Toast.makeText(requireContext(), "현재 위치를 가져올 수 없습니다", Toast.LENGTH_SHORT).show();
+                }
+            }).addOnFailureListener(e -> {
+                Toast.makeText(requireContext(), "위치 가져오기 실패", Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
+    /**
+     * 전체 주소에서 시 부분만 추출
+     * 예: "서원구 모충동" -> "청주시"
+     */
+    private String extractCityFromRegion(String fullRegion) {
+        if (fullRegion == null || fullRegion.isEmpty()) {
+            return null;
+        }
+        
+        // 공백으로 분리
+        String[] parts = fullRegion.split(" ");
+        
+        // "시"로 끝나는 부분 찾기
+        for (String part : parts) {
+            if (part.endsWith("시")) {
+                return part;
+            }
+        }
+        
+        // 시가 없으면 첫 번째 부분 반환 (구 또는 도)
+        return parts.length > 0 ? parts[0] : null;
     }
 
     private void loadHomeRegionPosts() {

@@ -246,6 +246,32 @@ public class CommunityDao {
     }
 
     /**
+     * 시 단위로 게시글 조회 (부분 일치)
+     * 예: cityName = "청주시" → "청주시", "서원구 모충동", "청주시 상당구" 모두 포함
+     */
+    public List<Post> getPostsByCity(String cityName) {
+        List<Post> result = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        
+        // region에 cityName이 포함된 게시글 찾기
+        Cursor cursor = db.query(CommunityDBHelper.TABLE_POSTS,
+                null,
+                "region LIKE ?",
+                new String[] { "%" + cityName + "%" },
+                null,
+                null,
+                "id DESC");
+        try {
+            while (cursor.moveToNext()) {
+                result.add(cursorToPost(cursor));
+            }
+        } finally {
+            cursor.close();
+        }
+        return result;
+    }
+
+    /**
      * 회원 탈퇴 시 해당 사용자의 모든 게시글 삭제
      */
     public void deletePostsByUser(String authorId, String authorNickname) {
