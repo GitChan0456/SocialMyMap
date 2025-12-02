@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -40,6 +41,7 @@ public class BoardFragment extends Fragment {
     private CommunityDao communityDao;
     private LocationHelper locationHelper;
     private Spinner spinnerFilter;
+    private TextView tvCurrentRegion;
 
     private String currentFilterMode = "우리 지역";
     private Location currentLocation;
@@ -58,9 +60,12 @@ public class BoardFragment extends Fragment {
         rvPosts.setAdapter(adapter);
         rvPosts.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // 현재 필터 기준 지역 TextView
+        tvCurrentRegion = view.findViewById(R.id.tv_current_region);
+
         // 지역 필터 Spinner 설정
         spinnerFilter = view.findViewById(R.id.spinner_region_filter);
-        String[] filterOptions = { "우리 지역", "현재 지역", "우리 동네", "현재 위치", "주변 5km" };
+        String[] filterOptions = { "우리 지역", "현재 지역", "우리 동네", "현재 동네", "주변 5km" };
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_item, filterOptions);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -93,7 +98,7 @@ public class BoardFragment extends Fragment {
             case "우리 동네":
                 loadHomeRegionPosts();
                 break;
-            case "현재 위치":
+            case "현재 동네":
                 loadCurrentLocationPosts();
                 break;
             case "주변 5km":
@@ -117,6 +122,7 @@ public class BoardFragment extends Fragment {
         String cityName = extractCityFromRegion(homeRegion);
         
         if (cityName != null && !cityName.isEmpty()) {
+            tvCurrentRegion.setText(cityName);
             posts.clear();
             posts.addAll(communityDao.getPostsByCity(cityName));
             adapter.notifyDataSetChanged();
@@ -139,14 +145,13 @@ public class BoardFragment extends Fragment {
             locationTask.addOnSuccessListener(location -> {
                 if (location != null) {
                     new Thread(() -> {
-                        String fullRegion = locationHelper.getRegionFromLocation(
+                        // 좌표에서 직접 시 정보 추출
+                        String cityName = locationHelper.getCityOnly(
                                 location.getLatitude(), location.getLongitude());
-                        
-                        // locality(시) 부분만 추출
-                        String cityName = extractCityFromRegion(fullRegion);
                         
                         requireActivity().runOnUiThread(() -> {
                             if (cityName != null && !cityName.isEmpty()) {
+                                tvCurrentRegion.setText(cityName);
                                 posts.clear();
                                 posts.addAll(communityDao.getPostsByCity(cityName));
                                 adapter.notifyDataSetChanged();
@@ -199,6 +204,7 @@ public class BoardFragment extends Fragment {
 
         posts.clear();
         posts.addAll(communityDao.getPostsByRegion(homeRegion));
+        tvCurrentRegion.setText(homeRegion);
         adapter.notifyDataSetChanged();
     }
 
@@ -219,6 +225,7 @@ public class BoardFragment extends Fragment {
                         String region = locationHelper.getRegionFromLocation(
                                 location.getLatitude(), location.getLongitude());
                         requireActivity().runOnUiThread(() -> {
+                            tvCurrentRegion.setText(region);
                             posts.clear();
                             posts.addAll(communityDao.getPostsByRegion(region));
                             adapter.notifyDataSetChanged();
@@ -248,6 +255,7 @@ public class BoardFragment extends Fragment {
             locationTask.addOnSuccessListener(location -> {
                 if (location != null) {
                     currentLocation = location;
+                    tvCurrentRegion.setText("주변 5km 이내");
                     filterByDistance(location, 5000); // 5km
                 } else {
                     Toast.makeText(requireContext(), "현재 위치를 가져올 수 없습니다", Toast.LENGTH_SHORT).show();

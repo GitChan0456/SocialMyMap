@@ -131,15 +131,54 @@ public class LocationHelper {
     }
 
     /**
-     * Address 정보에서 "구 동" 형태로 추출
-     * 형태: "서원구 모충동" 또는 "분당구 수내동"
+     * 좌표에서 locality(시) 정보만 추출
+     * 예: (36.xx, 127.xx) → "대전시" 또는 "청주시"
+     */
+    public String getCityOnly(double latitude, double longitude) {
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                String locality = address.getLocality();  // 예: "대전시", "청주시"
+                
+                Log.d(TAG, "getCityOnly - Locality: " + locality);
+                
+                if (locality != null && !locality.isEmpty()) {
+                    return locality;
+                }
+                
+                // locality가 없으면 adminArea에서 "시" 추출
+                String adminArea = address.getAdminArea();
+                if (adminArea != null && !adminArea.isEmpty()) {
+                    Log.d(TAG, "getCityOnly - AdminArea: " + adminArea);
+                    // "특별시", "광역시" 등 제거
+                    return adminArea.replace("특별시", "").replace("광역시", "")
+                            .replace("특별자치시", "").replace("특별자치도", "").replace("도", "").trim();
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "getCityOnly IOException", e);
+        }
+        return null;
+    }
+
+    /**
+     * Address 정보에서 "시 구 동" 형태로 추출
+     * 형태: "청주시 서원구 모충동" 또는 "성남시 분당구 수내동"
      */
     private String extractRegionFromAddress(String adminArea, String locality, String subLocality, String thoroughfare, String featureName, String addressLine) {
         try {
             StringBuilder region = new StringBuilder();
             
+            // locality 추가 (청주시, 성남시 등) - 시 단위 필터링을 위해 필수
+            if (locality != null && !locality.isEmpty()) {
+                region.append(locality);
+            }
+            
             // subLocality 추가 (서원구, 분당구 등)
             if (subLocality != null && !subLocality.isEmpty()) {
+                if (region.length() > 0) region.append(" ");
                 region.append(subLocality);
             }
             
@@ -176,12 +215,7 @@ public class LocationHelper {
                 return result;
             }
             
-            // subLocality도 없으면 locality 사용
-            if (locality != null && !locality.isEmpty()) {
-                return locality;
-            }
-            
-            // 최후의 수단으로 adminArea 사용
+            // locality도 없으면 adminArea 사용
             if (adminArea != null && !adminArea.isEmpty()) {
                 return adminArea;
             }

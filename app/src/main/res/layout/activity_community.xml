@@ -14,7 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:title="현재 위치"
+            app:title="커뮤니티"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:titleTextColor="@android:color/white"/>
 
