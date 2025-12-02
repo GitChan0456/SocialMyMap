@@ -104,6 +104,49 @@ public class UserDao {
         cursor.close();
         return count > 0;
     }
+
+    /**
+     * 우리 동네 정보 업데이트
+     */
+    public boolean updateHomeRegion(String userId, String homeRegion, double lat, double lng) {
+        ContentValues values = new ContentValues();
+        values.put(UserDBHelper.COLUMN_HOME_REGION, homeRegion);
+        values.put(UserDBHelper.COLUMN_HOME_LAT, lat);
+        values.put(UserDBHelper.COLUMN_HOME_LNG, lng);
+
+        String selection = UserDBHelper.COLUMN_USER_ID + " = ?";
+        String[] selectionArgs = { userId };
+
+        int result = db.update(UserDBHelper.TABLE_USERS, values, selection, selectionArgs);
+        return result > 0;
+    }
+
+    /**
+     * 우리 동네 정보 조회
+     */
+    public HomeRegionData getHomeRegion(String userId) {
+        String[] columns = {
+            UserDBHelper.COLUMN_HOME_REGION,
+            UserDBHelper.COLUMN_HOME_LAT,
+            UserDBHelper.COLUMN_HOME_LNG
+        };
+        String selection = UserDBHelper.COLUMN_USER_ID + " = ?";
+        String[] selectionArgs = { userId };
+
+        Cursor cursor = db.query(UserDBHelper.TABLE_USERS, columns, selection, selectionArgs, null, null, null);
+        HomeRegionData data = null;
+        if (cursor.moveToFirst()) {
+            String region = cursor.getString(cursor.getColumnIndexOrThrow(UserDBHelper.COLUMN_HOME_REGION));
+            double lat = cursor.getDouble(cursor.getColumnIndexOrThrow(UserDBHelper.COLUMN_HOME_LAT));
+            double lng = cursor.getDouble(cursor.getColumnIndexOrThrow(UserDBHelper.COLUMN_HOME_LNG));
+
+            if (region != null && !region.isEmpty()) {
+                data = new HomeRegionData(region, lat, lng);
+            }
+        }
+        cursor.close();
+        return data;
+    }
 }
 
 // 사용자 정보를 담을 간단한 데이터 클래스

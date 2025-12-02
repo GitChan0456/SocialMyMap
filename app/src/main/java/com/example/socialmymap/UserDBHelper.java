@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class UserDBHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "socialmap.db";
-    private static final int DATABASE_VERSION = 5; // 즐겨찾기 확장 버전
+    private static final int DATABASE_VERSION = 6; // 우리 동네 필드 추가
 
     // User Table
     public static final String TABLE_USERS = "user_table";
@@ -16,6 +16,9 @@ public class UserDBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_PASSWORD = "password";
     public static final String COLUMN_NICKNAME = "nickname";
     public static final String COLUMN_EMAIL = "email";
+    public static final String COLUMN_HOME_REGION = "home_region";
+    public static final String COLUMN_HOME_LAT = "home_lat";
+    public static final String COLUMN_HOME_LNG = "home_lng";
 
     // Favorites Table
     public static final String TABLE_FAVORITES = "favorite_places_table";
@@ -38,7 +41,10 @@ public class UserDBHelper extends SQLiteOpenHelper {
                 + COLUMN_USER_ID + " TEXT UNIQUE, "
                 + COLUMN_PASSWORD + " TEXT, "
                 + COLUMN_NICKNAME + " TEXT, "
-                + COLUMN_EMAIL + " TEXT" + ")";
+                + COLUMN_EMAIL + " TEXT, "
+                + COLUMN_HOME_REGION + " TEXT, "
+                + COLUMN_HOME_LAT + " REAL, "
+                + COLUMN_HOME_LNG + " REAL" + ")";
         db.execSQL(CREATE_USER_TABLE);
 
         createFavoritesTable(db);
@@ -50,6 +56,11 @@ public class UserDBHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_FAVORITES);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
             onCreate(db);
+        } else if (oldVersion < 6) {
+            // 버전 5 → 6: 우리 동네 컬럼 추가
+            db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COLUMN_HOME_REGION + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COLUMN_HOME_LAT + " REAL");
+            db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COLUMN_HOME_LNG + " REAL");
         }
     }
 

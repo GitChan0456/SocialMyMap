@@ -87,31 +87,33 @@ public class LocationHelper {
     }
 
     /**
-     * Address 정보에서 "시 구" 형태로 추출
+     * Address 정보에서 상세 주소 추출
+     * 형태: "충청북도 청주시 서원구" 또는 "경기도 성남시 분당구"
      */
     private String extractRegionFromAddress(String adminArea, String locality, String subLocality) {
         try {
-            // adminArea 정리 (특별시, 광역시 등 제거)
-            String city = "";
-            if (adminArea != null) {
-                city = adminArea.replace("특별시", "").replace("광역시", "")
-                        .replace("특별자치시", "").replace("특별자치도", "").replace("도", "").trim();
+            StringBuilder region = new StringBuilder();
+            
+            // adminArea 추가 (충청북도, 경기도 등)
+            if (adminArea != null && !adminArea.isEmpty()) {
+                region.append(adminArea);
             }
-
-            // 구/군 정보
-            String district = "";
-            if (subLocality != null) {
-                district = subLocality; // 예: 분당구
-            } else if (locality != null && !locality.equals(city)) {
-                district = locality; // 예: 성남시
+            
+            // locality 추가 (청주시, 성남시 등)
+            if (locality != null && !locality.isEmpty()) {
+                if (region.length() > 0) region.append(" ");
+                region.append(locality);
             }
-
-            if (!city.isEmpty() && !district.isEmpty()) {
-                return city + " " + district;
-            } else if (!city.isEmpty()) {
-                return city;
-            } else if (!district.isEmpty()) {
-                return district;
+            
+            // subLocality 추가 (서원구, 분당구 등)
+            if (subLocality != null && !subLocality.isEmpty()) {
+                if (region.length() > 0) region.append(" ");
+                region.append(subLocality);
+            }
+            
+            String result = region.toString().trim();
+            if (!result.isEmpty()) {
+                return result;
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in extractRegionFromAddress", e);

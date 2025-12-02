@@ -38,9 +38,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvViews.setText(String.valueOf(post.views));
         holder.tvComments.setText(String.valueOf(post.commentCount));
 
-        // 지역 정보 표시
+        // 지역 정보 표시 (locality만 추출)
         if (post.region != null && !post.region.isEmpty() && !post.region.equals("미분류")) {
-            holder.tvRegion.setText(post.region);
+            String simpleRegion = extractLocalityFromRegion(post.region);
+            holder.tvRegion.setText(simpleRegion);
             holder.tvRegion.setVisibility(View.VISIBLE);
         } else {
             holder.tvRegion.setVisibility(View.GONE);
@@ -52,6 +53,29 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             intent.putExtra("position", position);
             holder.itemView.getContext().startActivity(intent);
         });
+    }
+
+    /**
+     * 전체 주소에서 locality(시) 부분만 추출
+     * 예: "충청북도 청주시 서원구" → "청주시"
+     */
+    private String extractLocalityFromRegion(String fullRegion) {
+        if (fullRegion == null || fullRegion.isEmpty()) {
+            return fullRegion;
+        }
+        
+        // 공백으로 분리
+        String[] parts = fullRegion.split(" ");
+        
+        // "시"로 끝나는 부분 찾기
+        for (String part : parts) {
+            if (part.endsWith("시")) {
+                return part;
+            }
+        }
+        
+        // "시"가 없으면 마지막 부분 반환 (예: "서울특별시" → "서울특별시")
+        return parts.length > 0 ? parts[parts.length - 1] : fullRegion;
     }
 
     @Override

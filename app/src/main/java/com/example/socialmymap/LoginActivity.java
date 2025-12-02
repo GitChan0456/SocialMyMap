@@ -42,12 +42,21 @@ public class LoginActivity extends AppCompatActivity {
 
             if (userDao.loginUser(userId, password)) {
                 UserData userData = userDao.getUserData(userId);
+                HomeRegionData homeData = userDao.getHomeRegion(userId);
                 
                 SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString("user_id", userId);
                 editor.putString("user_nickname", userData.nickname);
                 editor.putString("user_email", userData.email);
+                
+                // 우리 동네 정보도 로드
+                if (homeData != null) {
+                    editor.putString("home_region", homeData.region);
+                    editor.putString("home_lat", String.valueOf(homeData.latitude));
+                    editor.putString("home_lng", String.valueOf(homeData.longitude));
+                }
+                
                 editor.putBoolean("is_logged_in", true);
                 editor.apply();
 

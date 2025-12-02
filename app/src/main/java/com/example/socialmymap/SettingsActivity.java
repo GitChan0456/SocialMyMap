@@ -28,6 +28,7 @@ public class SettingsActivity extends AppCompatActivity {
     private SharedPreferences preferences;
     private SharedPreferences userPrefs;
     private LocationHelper locationHelper;
+    private UserDao userDao;
     private TextView tvHomeRegion;
     private LinearLayout layoutHomeRegion;
 
@@ -44,17 +45,31 @@ public class SettingsActivity extends AppCompatActivity {
         preferences = getSharedPreferences("app_settings", MODE_PRIVATE);
         userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         locationHelper = new LocationHelper(this);
+        userDao = new UserDao(this);
+        userDao.open();
 
         switchDarkMode = findViewById(R.id.switch_dark_mode);
         tvHomeRegion = findViewById(R.id.tv_home_region);
         layoutHomeRegion = findViewById(R.id.layout_home_region);
 
-        // 저장된 우리 동네 표시
-        String homeRegion = userPrefs.getString("home_region", null);
-        if (homeRegion != null && !homeRegion.isEmpty()) {
-            tvHomeRegion.setText(homeRegion);
+        // DB에서 우리 동네 불러오기
+        String userId = userPrefs.getString("user_id", "");
+        HomeRegionData homeData = userDao.getHomeRegion(userId);
+        
+        if (homeData != null) {
+            tvHomeRegion.setText(homeData.region);
         } else {
-            tvHomeRegion.setText("설정되지 않음");
+            // DB에 없으면 SharedPreferences에서 마이그레이션
+            String spHomeRegion = userPrefs.getString("home_region", null);
+            if (spHomeRegion != null && !spHomeRegion.isEmpty()) {
+                // SharedPreferences → DB 마이그레이션
+                double lat = Double.parseDouble(userPrefs.getString("home_lat", "0"));
+                double lng = Double.parseDouble(userPrefs.getString("home_lng", "0"));
+                userDao.updateHomeRegion(userId, spHomeRegion, lat, lng);
+                tvHomeRegion.setText(spHomeRegion);
+            } else {
+                tvHomeRegion.setText("설정되지 않음");
+            }
         }
 
         // 우리 동네 설정 클릭 리스너
@@ -112,16 +127,18 @@ public class SettingsActivity extends AppCompatActivity {
 
                         runOnUiThread(() -> {
                             if (region != null && !region.equals("미분류")) {
-                                // 우리 동네 저장
-                                SharedPreferences.Editor editor = userPrefs.edit();
-                                editor.putString("home_region", region);
-                                editor.putString("home_lat", String.valueOf(lat));
-                                editor.putString("home_lng", String.valueOf(lng));
-                                editor.apply();
-
-                                tvHomeRegion.setText(region);
-                                Toast.makeText(this, "우리 동네가 '" + region + "'로 설정되었습니다",
-                                        Toast.LENGTH_SHORT).show();
+                                String userId = userPrefs.getString("user_id", "");
+                                
+                                // DB에 저장
+                                boolean success = userDao.updateHomeRegion(userId, region, lat, lng);
+                                
+                                if (success) {
+                                    tvHomeRegion.setText(region);
+                                    Toast.makeText(this, "우리 동네가 '" + region + "'로 설정되었습니다",
+                                            Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(this, "저장에 실패했습니다", Toast.LENGTH_SHORT).show();
+                                }
                             } else {
                                 Toast.makeText(this, "주소를 가져올 수 없습니다",
                                         Toast.LENGTH_SHORT).show();
@@ -150,6 +167,14 @@ public class SettingsActivity extends AppCompatActivity {
                 Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (userDao != null) {
+            userDao.close();
+        }
+        super.onDestroy();
     }
 
     @Override
