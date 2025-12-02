@@ -56,8 +56,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     /**
-     * 전체 주소에서 locality(시) 부분만 추출
-     * 예: "충청북도 청주시 서원구" → "청주시"
+     * 전체 주소에서 subLocality(구) 부분만 추출
+     * 예: "서원구 모충동" → "서원구"
      */
     private String extractLocalityFromRegion(String fullRegion) {
         if (fullRegion == null || fullRegion.isEmpty()) {
@@ -67,15 +67,22 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         // 공백으로 분리
         String[] parts = fullRegion.split(" ");
         
-        // "시"로 끝나는 부분 찾기
+        // "구"로 끝나는 부분 찾기 (우선)
+        for (String part : parts) {
+            if (part.endsWith("구")) {
+                return part;
+            }
+        }
+        
+        // "구"가 없으면 "시"로 끝나는 부분 찾기
         for (String part : parts) {
             if (part.endsWith("시")) {
                 return part;
             }
         }
         
-        // "시"가 없으면 마지막 부분 반환 (예: "서울특별시" → "서울특별시")
-        return parts.length > 0 ? parts[parts.length - 1] : fullRegion;
+        // 둘 다 없으면 첫 번째 부분 반환
+        return parts.length > 0 ? parts[0] : fullRegion;
     }
 
     @Override
