@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "607610585564",
+    "firebase_url": "https://socialmymap-76e6e-default-rtdb.firebaseio.com",
+    "project_id": "socialmymap-76e6e",
+    "storage_bucket": "socialmymap-76e6e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:607610585564:android:4305bd96e12ac295514f19",
+        "android_client_info": {
+          "package_name": "com.example.socialmymap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLW181Iri4MeBSgFoJfmXv54ddbK-MLYU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

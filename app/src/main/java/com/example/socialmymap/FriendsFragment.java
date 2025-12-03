@@ -60,9 +60,18 @@ public class FriendsFragment extends Fragment {
                 },
                 (friend) -> {
                     // 채팅 시작
-                    android.content.Intent intent = new android.content.Intent(getActivity(), ChatRoomActivity.class);
-                    intent.putExtra("friend_user_id", friend.friendUserId);
-                    intent.putExtra("friend_name", friend.friendNickname);
+                    String myId = currentUserId;
+                    String otherId = friend.friendUserId;
+                    String roomId;
+                    if (myId.compareTo(otherId) < 0) {
+                        roomId = myId + "_" + otherId;
+                    } else {
+                        roomId = otherId + "_" + myId;
+                    }
+
+                    android.content.Intent intent = new android.content.Intent(getActivity(), ChatActivity.class);
+                    intent.putExtra("roomId", roomId);
+                    intent.putExtra("otherUserName", friend.friendNickname);
                     startActivity(intent);
                 });
 
