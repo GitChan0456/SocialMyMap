@@ -14,6 +14,12 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,10 +27,10 @@ public class ChatFragment extends Fragment {
 
     private RecyclerView rvChatRooms;
     private TextView tvEmptyChat;
-    private ChatRoomAdapter adapter;
-    private ChatDao chatDao;
-    private List<ChatRoom> chatRoomList;
+    private ChatRoomListAdapter adapter;
+    private List<ChatRoomItem> chatRoomList;
     private String currentUserId;
+    private DatabaseReference chatsRef;
 
     @Nullable
     @Override
@@ -39,38 +45,89 @@ public class ChatFragment extends Fragment {
         SharedPreferences prefs = requireActivity().getSharedPreferences("user_prefs", requireContext().MODE_PRIVATE);
         currentUserId = prefs.getString("user_id", "");
 
-        // ChatDao 초기화
-        chatDao = new ChatDao(requireContext());
-        chatDao.open();
+        // Firebase 초기화
+        chatsRef = FirebaseDatabase.getInstance().getReference("chats");
 
         // 어댑터 설정
         chatRoomList = new ArrayList<>();
-        adapter = new ChatRoomAdapter(chatRoomList, chatRoom -> {
+        adapter = new ChatRoomListAdapter(chatRoomList, chatRoomItem -> {
             // 채팅방 클릭 시
-            Intent intent = new Intent(getActivity(), ChatRoomActivity.class);
-            intent.putExtra("friend_user_id", chatRoom.friendUserId);
-            intent.putExtra("friend_name", chatRoom.friendNickname);
+            Intent intent = new Intent(getActivity(), ChatActivity.class);
+            intent.putExtra("roomId", chatRoomItem.roomId);
+            intent.putExtra("otherUserName", chatRoomItem.otherUserName);
             startActivity(intent);
         });
 
         rvChatRooms.setLayoutManager(new LinearLayoutManager(getContext()));
         rvChatRooms.setAdapter(adapter);
 
+        // 채팅방 목록 로드
+        loadChatRooms();
+
         return view;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        loadChatRooms();
+    private void loadChatRooms() {
+        chatsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                chatRoomList.clear();
+
+                for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                    String roomId = roomSnapshot.getKey();
+
+                    // roomId에서 현재 사용자가 포함되어 있는지 확인
+                    if (roomId != null && roomId.contains(currentUserId)) {
+                        // 상대방 ID 추출
+                        String[] userIds = roomId.split("_");
+                        String otherUserId = userIds[0].equals(currentUserId) ? userIds[1] : userIds[0];
+
+                        // 마지막 메시지 가져오기
+                        DataSnapshot messagesSnapshot = roomSnapshot.child("messages");
+                        String lastMessage = "";
+                        long lastMessageTime = 0;
+                        String otherUserName = otherUserId; // 기본값
+
+                        if (messagesSnapshot.exists()) {
+                            for (DataSnapshot msgSnapshot : messagesSnapshot.getChildren()) {
+                                ChatMessage msg = msgSnapshot.getValue(ChatMessage.class);
+                                if (msg != null) {
+                                    if (msg.timestamp > lastMessageTime) {
+                                        lastMessage = msg.message;
+                                        lastMessageTime = msg.timestamp;
+                                    }
+                                    // 상대방 이름 찾기
+                                    if (!msg.senderId.equals(currentUserId)) {
+                                        otherUserName = msg.senderName;
+                                    }
+                                }
+                            }
+                        }
+
+                        // 채팅방 아이템 생성
+                        ChatRoomItem item = new ChatRoomItem();
+                        item.roomId = roomId;
+                        item.otherUserId = otherUserId;
+                        item.otherUserName = otherUserName;
+                        item.lastMessage = lastMessage.isEmpty() ? "메시지를 보내보세요" : lastMessage;
+                        item.lastMessageTime = lastMessageTime;
+
+                        chatRoomList.add(item);
+                    }
+                }
+
+                adapter.notifyDataSetChanged();
+                updateEmptyView();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                updateEmptyView();
+            }
+        });
     }
 
-    private void loadChatRooms() {
-        chatRoomList.clear();
-        chatRoomList.addAll(chatDao.getAllChatRooms(currentUserId));
-        adapter.notifyDataSetChanged();
-
-        // 빈 상태 표시
+    private void updateEmptyView() {
         if (chatRoomList.isEmpty()) {
             rvChatRooms.setVisibility(View.GONE);
             tvEmptyChat.setVisibility(View.VISIBLE);
@@ -80,11 +137,12 @@ public class ChatFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onDestroy() {
-        if (chatDao != null) {
-            chatDao.close();
-        }
-        super.onDestroy();
+    // 채팅방 아이템 클래스
+    public static class ChatRoomItem {
+        public String roomId;
+        public String otherUserId;
+        public String otherUserName;
+        public String lastMessage;
+        public long lastMessageTime;
     }
 }
